@@ -1,0 +1,575 @@
+
+  EPA STORM WATER MANAGEMENT MODEL - VERSION 5.1 (Build 5.3.0.dev0)
+  --------------------------------------------------------------
+
+  
+  *********************************************************
+  NOTE: The summary statistics displayed in this report are
+  based on results found at every computational time step,  
+  not just on results from each reporting time step.
+  *********************************************************
+  
+  ****************
+  Analysis Options
+  ****************
+  Flow Units ............... CMS
+  Process Models:
+    Rainfall/Runoff ........ YES
+    RDII ................... NO
+    Snowmelt ............... NO
+    Groundwater ............ NO
+    Flow Routing ........... YES
+    Ponding Allowed ........ NO
+    Water Quality .......... NO
+  Infiltration Method ...... HORTON
+  Flow Routing Method ...... DYNWAVE
+  Surcharge Method ......... EXTRAN
+  Starting Date ............ 01/01/2000 00:00:00
+  Ending Date .............. 01/01/2000 04:00:00
+  Antecedent Dry Days ...... 0.0
+  Report Time Step ......... 00:05:00
+  Wet Time Step ............ 00:05:00
+  Dry Time Step ............ 00:05:00
+  Routing Time Step ........ 30.00 sec
+  Variable Time Step ....... YES
+  Maximum Trials ........... 8
+  Number of Threads ........ 1
+  Head Tolerance ........... 0.001500 m
+  
+  
+  *********************
+  Control Actions Taken
+  *********************
+   01/01/2000: 00:00:01 Link V2 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 00:00:01 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:00:01 Link V4 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:00:01 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:05:00 Link V2 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 00:05:00 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:05:00 Link V4 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:05:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:10:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:10:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:10:00 Link V4 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 00:10:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:15:00 Link V2 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:15:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:15:00 Link V4 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 00:15:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:20:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:20:00 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:20:00 Link V4 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 00:20:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:25:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:25:00 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:25:00 Link V4 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 00:25:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:30:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:30:00 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:30:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:30:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:35:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:35:00 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:35:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:35:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:40:00 Link V2 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 00:40:00 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:40:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:40:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:45:00 Link V2 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:45:00 Link V3 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:45:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:45:00 Link V6 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:50:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:50:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:50:00 Link V4 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 00:50:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 00:55:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:55:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 00:55:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 00:55:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:00:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:00:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:00:00 Link V4 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 01:00:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:05:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:05:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:05:00 Link V4 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 01:05:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:10:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:10:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:10:00 Link V4 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 01:10:00 Link V6 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 01:15:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:15:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:15:00 Link V4 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 01:15:00 Link V6 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 01:20:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:20:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:20:00 Link V4 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 01:20:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:25:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:25:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:25:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:25:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:30:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:30:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:30:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:30:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:35:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:35:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:35:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:35:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:40:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:40:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:40:00 Link V4 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 01:40:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:45:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:45:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:45:00 Link V4 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 01:45:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:50:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:50:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:50:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:50:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:55:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:55:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 01:55:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 01:55:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:00:00 Link V2 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 02:00:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 02:00:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:00:00 Link V6 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 02:05:00 Link V2 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 02:05:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 02:05:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:05:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:10:00 Link V2 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 02:10:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:10:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:10:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:15:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 02:15:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:15:00 Link V4 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:15:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:20:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:20:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 02:20:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:20:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:25:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:25:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:25:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:25:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:30:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:30:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 02:30:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:30:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:35:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 02:35:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:35:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:35:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:40:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:40:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 02:40:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:40:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:45:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 02:45:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:45:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:45:00 Link V6 setting changed to   0.50 by Control ToolkitAPI
+   01/01/2000: 02:50:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:50:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 02:50:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:50:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:55:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 02:55:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 02:55:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 02:55:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:00:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:00:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 03:00:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:00:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:05:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:05:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:05:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:05:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:10:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:10:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 03:10:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:10:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:15:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:15:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:15:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:15:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:20:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:20:00 Link V3 setting changed to   1.00 by Control ToolkitAPI
+   01/01/2000: 03:20:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:20:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:25:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:25:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:25:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:25:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:30:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:30:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:30:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:30:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:35:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:35:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:35:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:35:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:40:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:40:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:40:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:40:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:45:00 Link V2 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:45:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:45:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:45:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:50:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:50:00 Link V3 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:50:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:50:00 Link V6 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:55:00 Link V2 setting changed to   0.00 by Control ToolkitAPI
+   01/01/2000: 03:55:00 Link V3 setting changed to   0.75 by Control ToolkitAPI
+   01/01/2000: 03:55:00 Link V4 setting changed to   0.25 by Control ToolkitAPI
+   01/01/2000: 03:55:00 Link V6 setting changed to   0.00 by Control ToolkitAPI
+
+  
+  **************************        Volume         Depth
+  Runoff Quantity Continuity     hectare-m            mm
+  **************************     ---------       -------
+  Total Precipitation ......         2.673        14.831
+  Evaporation Loss .........         0.000         0.000
+  Infiltration Loss ........         0.000         0.000
+  Surface Runoff ...........         2.641        14.654
+  Final Storage ............         0.045         0.252
+  Continuity Error (%) .....        -0.503
+  
+  
+  **************************        Volume        Volume
+  Flow Routing Continuity        hectare-m      10^6 ltr
+  **************************     ---------     ---------
+  Dry Weather Inflow .......         0.027         0.268
+  Wet Weather Inflow .......         2.639        26.395
+  Groundwater Inflow .......         0.000         0.000
+  RDII Inflow ..............         0.000         0.000
+  External Inflow ..........         0.000         0.000
+  External Outflow .........         0.341         3.407
+  Flooding Loss ............         1.222        12.221
+  Evaporation Loss .........         0.000         0.000
+  Exfiltration Loss ........         0.000         0.000
+  Initial Stored Volume ....         0.000         0.000
+  Final Stored Volume ......         0.827         8.266
+  Continuity Error (%) .....        10.382
+  
+  
+  *************************
+  Highest Continuity Errors
+  *************************
+  Node T2 (27.67%)
+  Node T4 (24.17%)
+  Node T3 (23.06%)
+  Node T5 (17.42%)
+  Node T6 (14.54%)
+  
+  
+  ***************************
+  Time-Step Critical Elements
+  ***************************
+  Link C15 (68.01%)
+  
+  
+  ********************************
+  Highest Flow Instability Indexes
+  ********************************
+  Link C13 (7)
+  Link C11 (5)
+  Link C3 (5)
+  Link C23 (4)
+  Link C19 (4)
+  
+  
+  *************************
+  Routing Time Step Summary
+  *************************
+  Minimum Time Step           :     0.25 sec
+  Average Time Step           :    20.75 sec
+  Maximum Time Step           :    30.00 sec
+  Percent in Steady State     :     0.00
+  Average Iterations per Step :     2.95
+  Percent Not Converging      :     5.33
+  
+  
+  ***************************
+  Subcatchment Runoff Summary
+  ***************************
+  
+  ------------------------------------------------------------------------------------------------------------------------------
+                            Total      Total      Total      Total     Imperv       Perv      Total       Total     Peak  Runoff
+                           Precip      Runon       Evap      Infil     Runoff     Runoff     Runoff      Runoff   Runoff   Coeff
+  Subcatchment                 mm         mm         mm         mm         mm         mm         mm    10^6 ltr      CMS
+  ------------------------------------------------------------------------------------------------------------------------------
+  SC01                      14.83       0.00       0.00       0.00      14.77       0.00      14.77        4.87     2.32   0.996
+  SC010                     14.83       0.00       0.00       0.00      14.69       0.00      14.69        1.73     0.76   0.991
+  SC02                      14.83       0.00       0.00       0.00      14.75       0.00      14.75        3.36     1.58   0.994
+  SC03                      14.83       0.00       0.00       0.00      14.82       0.00      14.82        2.67     1.39   0.999
+  SC04                      14.83       0.00       0.00       0.00      14.49       0.00      14.49        1.00     0.36   0.977
+  SC05                      14.83       0.00       0.00       0.00      14.75       0.00      14.75        2.30     1.08   0.994
+  SC06                      14.83       0.00       0.00       0.00      14.37       0.00      14.37        4.68     1.58   0.969
+  SC07                      14.83       0.00       0.00       0.00      14.49       0.00      14.49        0.69     0.25   0.977
+  SC08                      14.83       0.00       0.00       0.00      14.68       0.00      14.68        4.11     1.79   0.990
+  SC09                      14.83       0.00       0.00       0.00      14.62       0.00      14.62        1.01     0.41   0.985
+  
+  
+  ******************
+  Node Depth Summary
+  ******************
+  
+  ---------------------------------------------------------------------------------
+                                 Average  Maximum  Maximum  Time of Max    Reported
+                                   Depth    Depth      HGL   Occurrence   Max Depth
+  Node                 Type       Meters   Meters   Meters  days hr:min      Meters
+  ---------------------------------------------------------------------------------
+  CSO10                JUNCTION     0.41     1.00    31.00     0  00:22        1.00
+  CSO7                 JUNCTION     0.51     1.20    35.20     0  00:24        1.20
+  CSO8                 JUNCTION     0.77     2.00    34.00     0  00:21        2.00
+  CSO9                 JUNCTION     0.74     2.00    42.00     0  00:22        2.00
+  J1                   JUNCTION     0.13     0.35    34.35     0  00:35        0.35
+  J10                  JUNCTION     0.18     0.41    29.41     0  00:32        0.41
+  J11                  JUNCTION     0.18     0.30    31.30     0  01:02        0.30
+  J12                  JUNCTION     0.66     1.04    27.04     0  01:42        1.03
+  J13                  JUNCTION     0.13     0.33    29.33     0  00:35        0.33
+  J14                  JUNCTION     0.07     0.19    20.19     0  02:07        0.19
+  J15                  JUNCTION     0.26     0.54    15.54     0  00:36        0.54
+  J16                  JUNCTION     0.14     0.36    30.36     0  00:35        0.36
+  J17                  JUNCTION     0.04     0.14    20.14     0  00:45        0.14
+  J18                  JUNCTION     0.10     0.16    29.16     0  01:00        0.16
+  J19                  JUNCTION     0.15     0.17     8.17     0  00:39        0.17
+  J2                   JUNCTION     0.07     0.08    25.08     0  01:27        0.08
+  J3                   JUNCTION     0.10     0.16    18.16     0  02:10        0.16
+  J4                   JUNCTION     0.31     0.96    33.96     0  00:27        0.74
+  J5                   JUNCTION     0.11     0.22    32.22     0  00:40        0.22
+  J6                   JUNCTION     0.08     0.12    25.12     0  01:15        0.12
+  J7                   JUNCTION     0.14     0.23    39.23     0  01:03        0.23
+  J8                   JUNCTION     0.20     0.42    36.42     0  00:40        0.42
+  J9                   JUNCTION     0.11     0.16    29.16     0  02:05        0.16
+  Out_to_WWTP          OUTFALL      0.15     0.17     6.17     0  03:32        0.17
+  T1                   STORAGE      4.27     5.00    15.00     0  00:38        5.00
+  T2                   STORAGE      4.17     5.00    26.00     0  00:48        5.00
+  T3                   STORAGE      3.70     5.00    27.00     0  01:43        5.00
+  T4                   STORAGE      3.76     5.00    32.00     0  01:22        5.00
+  T5                   STORAGE      4.18     5.00    32.00     0  00:40        5.00
+  T6                   STORAGE      4.14     5.00    36.00     0  00:42        5.00
+  
+  
+  *******************
+  Node Inflow Summary
+  *******************
+  
+  -------------------------------------------------------------------------------------------------
+                                  Maximum  Maximum                  Lateral       Total        Flow
+                                  Lateral    Total  Time of Max      Inflow      Inflow     Balance
+                                   Inflow   Inflow   Occurrence      Volume      Volume       Error
+  Node                 Type           CMS      CMS  days hr:min    10^6 ltr    10^6 ltr     Percent
+  -------------------------------------------------------------------------------------------------
+  CSO10                JUNCTION     0.762    0.762     0  00:35        1.74        1.74       0.003
+  CSO7                 JUNCTION     0.251    0.251     0  00:40        0.71        0.71       0.059
+  CSO8                 JUNCTION     1.791    1.791     0  00:35        4.11        4.11      -0.004
+  CSO9                 JUNCTION     0.411    0.411     0  00:35        1.02        1.02       0.022
+  J1                   JUNCTION     1.080    1.080     0  00:35        2.34        2.34      -0.137
+  J10                  JUNCTION     1.388    1.871     0  00:30        2.69        5.17      -0.104
+  J11                  JUNCTION     0.000    0.487     0  01:02           0        2.48       0.289
+  J12                  JUNCTION     0.000    1.866     0  00:32           0        6.56      11.103
+  J13                  JUNCTION     1.577    1.577     0  00:35        3.39        3.39      -0.402
+  J14                  JUNCTION     0.000    0.190     0  02:05           0        1.09       0.910
+  J15                  JUNCTION     0.000    2.589     0  00:35           0        8.19       0.748
+  J16                  JUNCTION     2.326    2.326     0  00:35        4.91        4.91      -0.100
+  J17                  JUNCTION     0.000    0.132     0  00:45           0       0.255       0.491
+  J18                  JUNCTION     0.000    0.202     0  01:01           0        1.04       0.013
+  J19                  JUNCTION     0.000    0.271     0  00:38           0        3.42       0.363
+  J2                   JUNCTION     0.000    0.039     0  00:41           0       0.492       1.007
+  J3                   JUNCTION     0.000    0.293     0  02:08           0        2.02       1.979
+  J4                   JUNCTION     0.000    0.085     0  00:25           0        0.45       0.454
+  J5                   JUNCTION     0.363    0.437     0  00:40        1.01        1.46      -0.071
+  J6                   JUNCTION     0.000    0.077     0  01:15           0       0.459       0.608
+  J7                   JUNCTION     0.000    0.127     0  01:03           0       0.663       0.378
+  J8                   JUNCTION     1.582    1.709     0  00:40        4.75        5.41      -0.032
+  J9                   JUNCTION     0.000    0.175     0  02:00           0        1.29       0.742
+  Out_to_WWTP          OUTFALL      0.000    0.271     0  00:39           0        3.41       0.000
+  T1                   STORAGE      0.000    2.530     0  00:36           0        8.13      10.098
+  T2                   STORAGE      0.000    1.573     0  00:35           0         3.4      38.257
+  T3                   STORAGE      0.000    1.839     0  00:35           0         5.9      29.967
+  T4                   STORAGE      0.000    0.437     0  00:40           0        1.46      31.877
+  T5                   STORAGE      0.000    1.077     0  00:35           0        2.34      21.095
+  T6                   STORAGE      0.000    1.702     0  00:40           0        5.41      17.010
+  
+  
+  **********************
+  Node Surcharge Summary
+  **********************
+  
+  Surcharging occurs when water rises above the top of the highest conduit.
+  ---------------------------------------------------------------------
+                                               Max. Height   Min. Depth
+                                   Hours       Above Crown    Below Rim
+  Node                 Type      Surcharged         Meters       Meters
+  ---------------------------------------------------------------------
+  CSO10                JUNCTION        0.81          0.560        0.000
+  CSO7                 JUNCTION        1.06          0.945        0.000
+  CSO8                 JUNCTION        1.00          1.547        0.000
+  CSO9                 JUNCTION        1.03          1.682        0.000
+  J4                   JUNCTION        1.01          0.656        1.044
+  
+  
+  *********************
+  Node Flooding Summary
+  *********************
+  
+  Flooding refers to all water that overflows a node, whether it ponds or not.
+  --------------------------------------------------------------------------
+                                                             Total   Maximum
+                                 Maximum   Time of Max       Flood    Ponded
+                        Hours       Rate    Occurrence      Volume     Depth
+  Node                 Flooded       CMS   days hr:min    10^6 ltr    Meters
+  --------------------------------------------------------------------------
+  CSO10                   0.67     0.558      0  00:35       0.695     0.000
+  CSO7                    0.88     0.177      0  00:40       0.259     0.000
+  CSO8                    0.68     1.302      0  00:35       1.624     0.000
+  CSO9                    0.68     0.283      0  00:35       0.359     0.000
+  T1                      2.42     2.249      0  00:38       3.305     0.000
+  T2                      1.75     0.764      0  00:50       1.211     0.000
+  T3                      0.78     0.791      0  01:46       0.813     0.000
+  T4                      1.33     0.115      0  01:22       0.161     0.000
+  T5                      1.60     0.899      0  00:40       1.018     0.000
+  T6                      1.75     1.548      0  00:45       2.767     0.000
+  
+  
+  **********************
+  Storage Volume Summary
+  **********************
+  
+  --------------------------------------------------------------------------------------------------
+                         Average     Avg  Evap Exfil       Maximum     Max    Time of Max    Maximum
+                          Volume    Pcnt  Pcnt  Pcnt        Volume    Pcnt     Occurrence    Outflow
+  Storage Unit           1000 m3    Full  Loss  Loss       1000 m3    Full    days hr:min        CMS
+  --------------------------------------------------------------------------------------------------
+  T1                       0.598      85     0     0         0.700     100       0  00:38      0.271
+  T2                       0.833      83     0     0         1.000     100       0  00:48      0.132
+  T3                       1.922      74     0     0         2.600     100       0  01:43      0.233
+  T4                       0.376      75     0     0         0.500     100       0  01:22      0.077
+  T5                       0.418      84     0     0         0.500     100       0  00:40      0.039
+  T6                       0.497      83     0     0         0.600     100       0  00:42      0.175
+  
+  
+  ***********************
+  Outfall Loading Summary
+  ***********************
+  
+  -----------------------------------------------------------
+                         Flow       Avg       Max       Total
+                         Freq      Flow      Flow      Volume
+  Outfall Node           Pcnt       CMS       CMS    10^6 ltr
+  -----------------------------------------------------------
+  Out_to_WWTP           97.55     0.241     0.271       3.407
+  -----------------------------------------------------------
+  System                97.55     0.241     0.271       3.407
+  
+  
+  ********************
+  Link Flow Summary
+  ********************
+  
+  -----------------------------------------------------------------------------
+                                 Maximum  Time of Max   Maximum    Max/    Max/
+                                  |Flow|   Occurrence   |Veloc|    Full    Full
+  Link                 Type          CMS  days hr:min     m/sec    Flow   Depth
+  -----------------------------------------------------------------------------
+  C1                   CONDUIT     0.039     0  01:27      1.28    0.01    0.12
+  C10                  CONDUIT     1.702     0  00:40      2.35    0.18    0.64
+  C11                  CONDUIT     0.267     0  02:11      1.95    0.01    0.16
+  C12                  CONDUIT     0.168     0  02:05      0.69    0.01    0.30
+  C13                  CONDUIT     1.839     0  00:35      3.46    0.11    0.76
+  C14                  CONDUIT     0.271     0  00:39      2.08    0.02    0.09
+  C15                  CONDUIT     0.487     0  01:02      3.61    1.55    0.83
+  C16                  CONDUIT     0.486     0  00:52      1.83    0.05    0.18
+  C17                  CONDUIT     1.848     0  00:32      3.85    0.09    0.31
+  C18                  CONDUIT     1.573     0  00:35      2.67    0.06    0.58
+  C19                  CONDUIT     0.124     0  00:45      0.89    0.04    0.32
+  C2                   CONDUIT     0.076     0  01:15      2.03    0.09    0.22
+  C20                  CONDUIT     2.320     0  00:35      4.65    0.07    0.23
+  C21                  CONDUIT     0.202     0  01:01      1.87    1.16    0.69
+  C22                  CONDUIT     0.202     0  01:00      1.69    0.09    0.44
+  C23                  CONDUIT     2.530     0  00:36      2.71    0.28    0.68
+  C3                   CONDUIT     0.194     0  02:08      2.23    0.07    0.17
+  C4                   CONDUIT     1.077     0  00:35      2.34    0.26    0.67
+  C5                   CONDUIT     0.085     0  00:25      1.69    1.45    1.00
+  C6                   CONDUIT     0.074     0  00:40      1.27    1.18    0.87
+  C7                   CONDUIT     0.437     0  00:40      2.15    0.11    0.61
+  C8                   CONDUIT     0.127     0  01:03      1.89    1.60    0.86
+  C9                   CONDUIT     0.127     0  01:03      1.21    0.43    0.66
+  V1                   ORIFICE     0.271     0  00:38                      1.00
+  V2                   ORIFICE     0.132     0  00:45                      1.00
+  V3                   ORIFICE     0.190     0  02:05                      1.00
+  V4                   ORIFICE     0.077     0  01:15                      1.00
+  V5                   ORIFICE     0.039     0  00:41                      1.00
+  V6                   ORIFICE     0.175     0  02:00                      1.00
+  
+  
+  ***************************
+  Flow Classification Summary
+  ***************************
+  
+  -------------------------------------------------------------------------------------
+                      Adjusted    ---------- Fraction of Time in Flow Class ---------- 
+                       /Actual         Up    Down  Sub   Sup   Up    Down  Norm  Inlet 
+  Conduit               Length    Dry  Dry   Dry   Crit  Crit  Crit  Crit  Ltd   Ctrl  
+  -------------------------------------------------------------------------------------
+  C1                      1.00   0.00  0.00  0.00  0.32  0.68  0.00  0.00  0.86  0.00
+  C10                     1.00   0.00  0.00  0.00  0.89  0.11  0.00  0.00  0.91  0.00
+  C11                     1.00   0.00  0.00  0.00  0.66  0.34  0.00  0.00  1.00  0.00
+  C12                     1.00   0.00  0.02  0.00  0.98  0.00  0.00  0.00  0.98  0.00
+  C13                     1.00   0.00  0.00  0.00  0.86  0.14  0.00  0.00  0.16  0.00
+  C14                     1.00   0.01  0.00  0.00  0.02  0.97  0.00  0.00  0.12  0.00
+  C15                     1.00   0.02  0.00  0.00  0.00  0.98  0.00  0.00  0.01  0.00
+  C16                     1.00   0.00  0.02  0.00  0.21  0.77  0.00  0.00  0.18  0.00
+  C17                     1.00   0.00  0.00  0.00  0.59  0.41  0.00  0.00  0.88  0.00
+  C18                     1.00   0.00  0.00  0.00  0.90  0.10  0.00  0.00  0.92  0.00
+  C19                     1.00   0.00  0.00  0.00  1.00  0.00  0.00  0.00  1.00  0.00
+  C2                      1.00   0.00  0.03  0.00  0.28  0.69  0.00  0.00  0.70  0.00
+  C20                     1.00   0.00  0.00  0.00  0.33  0.67  0.00  0.00  0.93  0.00
+  C21                     1.00   0.00  0.00  0.00  0.03  0.97  0.00  0.00  0.00  0.00
+  C22                     1.00   0.00  0.00  0.00  0.58  0.42  0.00  0.00  1.00  0.00
+  C23                     1.00   0.00  0.00  0.00  0.89  0.11  0.00  0.00  0.90  0.00
+  C3                      1.00   0.00  0.04  0.00  0.44  0.52  0.00  0.00  0.49  0.00
+  C4                      1.00   0.00  0.00  0.00  0.91  0.09  0.00  0.00  0.93  0.00
+  C5                      1.00   0.00  0.00  0.00  0.91  0.09  0.00  0.00  0.64  0.00
+  C6                      1.00   0.00  0.00  0.00  0.51  0.48  0.00  0.00  0.01  0.00
+  C7                      1.00   0.00  0.00  0.00  0.88  0.12  0.00  0.00  0.91  0.00
+  C8                      1.00   0.00  0.00  0.00  0.40  0.60  0.00  0.00  0.00  0.00
+  C9                      1.00   0.00  0.00  0.00  1.00  0.00  0.00  0.00  1.00  0.00
+  
+  
+  *************************
+  Conduit Surcharge Summary
+  *************************
+  
+  ----------------------------------------------------------------------------
+                                                           Hours        Hours 
+                         --------- Hours Full --------   Above Full   Capacity
+  Conduit                Both Ends  Upstream  Dnstream   Normal Flow   Limited
+  ----------------------------------------------------------------------------
+  C10                         0.01      0.01      3.47      0.01         0.01
+  C13                         0.01      0.01      3.30      0.01         0.01
+  C15                         0.01      1.00      0.01      1.03         0.01
+  C18                         0.01      0.01      3.44      0.01         0.01
+  C21                         0.01      0.81      0.01      0.77         0.01
+  C23                         0.01      0.01      3.50      0.01         0.01
+  C4                          0.01      0.01      3.54      0.01         0.01
+  C5                          1.01      1.06      1.12      1.05         0.98
+  C6                          0.01      1.01      0.01      0.90         0.01
+  C7                          0.01      0.01      3.43      0.01         0.01
+  C8                          0.01      1.03      0.01      1.04         0.01
+  
+
+  Analysis begun on:  Tue Dec 21 09:11:31 2021
+  Analysis ended on:  Tue Dec 21 09:11:32 2021
+  Total elapsed time: 00:00:01
