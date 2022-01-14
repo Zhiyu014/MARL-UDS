@@ -56,13 +56,6 @@ def show_flooding(ax,labels,files,label,column,cumulative=False,label_position='
         ax.yaxis.set_ticks_position(label_position)
         ax.yaxis.set_label_position(label_position)
         ax.xaxis.set_major_locator(ticker.MultipleLocator(6))
-        # ax.set_xlabel('Time (H:M)')
-        
-        # flood.plot(legend = True,
-        #            ax = ax,
-        #            label = labels[idx],
-        #            xlabel = 'Time (hrs)',
-        #            ylabel = 'Flooding ($\mathregular{10^3} \mathregular{m^3}$)')
         out.close()
         
         rpt = read_rpt_file(out_file.replace('.out','.rpt'))
@@ -93,43 +86,6 @@ def read_rainfile(path):
 raintests = {file.split('_')[0]:eval(file.split('_')[1]) for file in listdir('./test/rains/') if file.endswith('txt') and file.startswith('Rain')}
 rains = {file.split('_')[0]:read_rainfile('./test/rains/'+file) for file in listdir('./test/rains/') if file.endswith('.txt') and file.startswith('Rain')}
 
-
-
-
-# fig = plt.figure(figsize=(20,25),dpi = 1200)
-# test_file = './test/sensi/Rain{0}_{1}_{2}.inp'
-# columns = ['Uncontrolled','BC','EFD','VDN']
-# for i in range(1,5):
-#     rain_id = 'Rain %s'%i
-#     rain = rains[rain_id]
-#     files = ['./test/sensi/Rain%s_'%i+col+'.inp' for col in columns]
-#     no_reward = env.test_no(rain,files[0])
-#     bc_reward = env.test_bc(rain,files[1])
-#     efd_reward = env.test_efd(rain,files[2])
-#     test_reward,_,_ = env.test(vdnn,rain,test_inp_file = files[-1])
-#     for sen in range(1,6):
-#         ax = fig.add_subplot(5,4,(sen-1)*4+i)
-#         _,_,lines = show_flooding(ax,columns,files,'system','Flow_lost_to_flooding',True,'left')
-#         time = lines[0].get_xdata()
-#         vols = []
-#         for j in range(50):
-#             if exists(test_file.format(i,sen,j).replace('.inp','.out')) == False:
-#                 test_reward,_,_ = env.test(vdnn,rain,test_inp_file = test_file.format(i,sen,j),sensi = 0.1*sen)
-#             vol = get_cum_flood(test_file.format(i,sen,j))
-#             vols.append(vol)
-#         vols = array(vols)
-#         min_vol,max_vol = vols.min(axis=0)[:-1],vols.max(axis=0)[:-1]
-#         fill = ax.fill_between(time,min_vol,max_vol,label = 'Uncertainty Buffer')
-#         ax.legend(lines+[fill],[l.get_label() for l in lines+[fill]],loc='lower right')
-#         if i == 1:
-#             ax.set_ylabel('Cumulative CSO ($\mathregular{10^3} \mathregular{m^3}$)')
-#         if sen == 1:
-#             ax.set_title(rain_id)
-#         if sen == 5:
-#             ax.set_xlabel('Time (H:M)')
-# fig.savefig('./test/results/sensi.png',dpi = 1200)
-            
-            
     
 test_file = './test/sensi/Rain{0}_{1}_{2}.inp'
 columns = ['Uncontrolled','BC','EFD','VDN']
@@ -142,19 +98,16 @@ for i in range(1,5):
     file_name = './test/'+rain_id+'_%s_'%i
     files = [file_name + alg + '.inp' for alg in columns]
     
-    # no_reward = env.test_no(rain,files[0])
-    # bc_reward = env.test_bc(rain,files[1])
-    # efd_reward = env.test_efd(rain,files[2])
-    # test_reward,_,_ = env.test(vdnn,rain,test_inp_file = files[-1])
+    no_reward = env.test_no(rain,files[0])
+    bc_reward = env.test_bc(rain,files[1])
+    efd_reward = env.test_efd(rain,files[2])
+    test_reward,_,_ = env.test(vdnn,rain,test_inp_file = files[-1])
     
     refers.append([read_rpt_file(file.replace('inp','rpt')).flow_routing_continuity['Flooding Loss']['Volume_10^6 ltr'] 
     for file in files])
     
     volss = []
     for sen in range(1,6):
-        # ax = fig.add_subplot(5,5,(sen-1)*4+i)
-        # _,_,lines = show_flooding(ax,columns,files,'system','Flow_lost_to_flooding',True,'left')
-        # ts = lines[0].get_xdata()
         vols = []
         for j in range(50):
             sensi_file = test_file.format(i,sen,j)
@@ -196,4 +149,4 @@ for i,data in enumerate(datas):
     ax.set_title(rain_id)
     ax.set_xlabel('Uncertainty level')
     ax.set_ylabel('Accumulated CSO volume ($\mathregular{10^3} \mathregular{m^3}$)')
-fig.savefig('./test/results/sensi.png',dpi=600)
+fig.savefig('./test/sensi/sensi.png',dpi=600)

@@ -51,12 +51,6 @@ def show_flooding(ax,labels,files,label,column,cumulative=False,label_position='
         ax.yaxis.set_label_position(label_position)
         ax.xaxis.set_major_locator(ticker.MultipleLocator(6))
         ax.set_xlabel('Time (H:M)')
-        
-        # flood.plot(legend = True,
-        #            ax = ax,
-        #            label = labels[idx],
-        #            xlabel = 'Time (hrs)',
-        #            ylabel = 'Flooding ($\mathregular{10^3} \mathregular{m^3}$)')
         out.close()
         
         rpt = read_rpt_file(out_file.replace('.out','.rpt'))
@@ -66,7 +60,6 @@ def show_flooding(ax,labels,files,label,column,cumulative=False,label_position='
         if len(node_flood) == 0:
             res[labels[idx]] = 1
         else:
-            # inflow = rpt.flow_routing_continuity['Dry Weather Inflow']['Volume_10^6 ltr'] + rpt.flow_routing_continuity['Wet Weather Inflow']['Volume_10^6 ltr']
             res[labels[idx]] = 1-sum(node_flood['Total_Flood_Volume_10^6 ltr']/node_inflow*node_flood['Hours_Flooded']/24)
     floods['Precipitation'] = rpt.runoff_quantity_continuity['Total Precipitation']['Depth_mm']
     return floods,res,lines
@@ -92,7 +85,6 @@ def write_rainfile(rain,rain_id,P):
 
 raintests = {file.split('_')[0]:eval(file.split('_')[1]) for file in listdir('./test/rains/') if file.endswith('txt') and file.startswith('Rain')}
 if len(raintests) == 0:
-    # raintests = {'Rain %s'%(idx+1):random.randint(1,10) for idx in range(9)}
     raintests = {'Rain %s'%(idx+1):idx+1 for idx in range(8)}
     rains = {rain_id:env.euler_II_Hyeto(None, P) for rain_id,P in raintests.items()}
     for rain_id,P in raintests.items():
@@ -107,20 +99,13 @@ test_res = pd.DataFrame(columns = ['Precipitation']+columns,index=rains.keys())
 
 fig = plt.figure(figsize=(15,20),dpi = 600)
 plt.tight_layout(pad=0.4,w_pad=0.5)
-# fig2 = plt.figure(figsize = (10,5))
-# ax2 = fig2.add_subplot(1,1,1)
 for rain_id,rain in rains.items():
     idx = eval(rain_id.split()[-1])
     P = raintests[rain_id]
     time = [ra[0] for ra in rain]+[str(t//60).zfill(2)+':'+str(t % 60).zfill(2) for t in range(125,240,5)]
     intensity = [ra[1] for ra in rain]+[0]*23
-
     
-    rain_name = rain_id+'_{0}_'.format(P)
-    # with open('./test/rains/'+rain_name+'.txt','w') as f:
-    #     lines = ['01/01/2000  '+ti+'  '+str(inte)+'\n' for ti,inte in zip(time,intensity)]
-    #     f.writelines(lines)
-    
+    rain_name = rain_id+'_{0}_'.format(P)    
     file_name = './test/'+rain_name
     files = [file_name + alg + '.inp' for alg in columns]
     test_reward,acts,_ = env.test(vdnn,rain,test_inp_file = files[-1])
@@ -129,8 +114,7 @@ for rain_id,rain in rains.items():
     efd_reward = env.test_efd(rain,files[2])
     
     ax = fig.add_subplot(4,2,idx)
-    ax.set_title(rain_id)
-    
+    ax.set_title(rain_id)    
     
     ax2 = ax.twinx()
     ax2.yaxis.set_ticks_position('left')
@@ -177,7 +161,6 @@ for idx,i in enumerate([2,3,4,6]):
     ax.xaxis.set_major_locator(ticker.MultipleLocator(6))
     ax.legend(lines,columns,loc='lower right')
     ax.set_ylabel('Depth ($m$)',labelpad=5)
-    
 fig.savefig('./test/results/tank_depth.png')      
 
 # plot orifice settings
