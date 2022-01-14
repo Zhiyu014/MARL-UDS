@@ -16,9 +16,9 @@ import pandas as pd
 from swmm_api import read_rpt_file,read_inp_file
 from numpy import array
 import numpy as np
-import os
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# import os
+# os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 plt.rc('font',family = 'Times New Roman')
 epsilon_decay = 0.999

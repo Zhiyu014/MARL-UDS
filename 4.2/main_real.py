@@ -23,7 +23,7 @@ epsilon_decay = 0.999
 
 
 # init SWMM environment and agents
-env = Ast(inp_train_file='./train_hsf/Real_VDN_{}.inp')
+env = Ast()
 agents = []
 for i in range(env.n_agents):
     agent = QAgent(epsilon_decay,env.action_size,env.observ_size,dueling=True,epsilon=1)
@@ -48,7 +48,7 @@ vdnn = VDN(
 N = 5000
 rain_num = 20
 #times = env.rand_events(rain_num,20,60,7)
-times = np.load('./train_hsf/times.npy')
+times = np.load('./train/times.npy')
 # env.generate_file(times)
 
 test_time = ('08/22/2006 02:50:00','08/22/2006 11:45:00')
@@ -103,17 +103,12 @@ np.save('./model/episode_reward_history.npy',np.array(episode_reward_history))
 np.save('./model/test_reward_history.npy',np.array(test_reward_history))
 
 
-
-
-
 fig,((axL,axP),(axM,axR)) = plt.subplots(nrows=2,ncols=2,figsize = (10,10), dpi=1200)
 axL.plot(arange(len(episode_reward_history)),episode_reward_history,label = 'reward')
 axL.set_xlabel('episode')
 axL.set_title('episode reward history')
 axL.legend(loc='lower right')
 
-# for idx in range(vdnn.n_agents):
-#     axP.plot(arange(len(train_loss_history)),[loss[idx] for loss in train_loss_history],label='Agent %s'%idx)
 axP.plot(arange(len(train_loss_history)),train_loss_history,label='loss')
 axP.set_xlabel('episode')
 axP.set_title("vdn's training loss")
@@ -125,8 +120,6 @@ axM.set_xlabel('episode')
 axM.set_title('test score history')
 axM.legend(loc='lower right')
 
-# for idx in range(vdnn.n_agents):
-#     axR.plot(arange(len(test_loss_history)),[loss[idx] for loss in test_loss_history],label='Agent %s'%idx)
 axR.plot(arange(len(test_loss_history)),test_loss_history,label='loss')
 axR.set_xlabel('episode')
 axR.set_title("vdn's test loss")

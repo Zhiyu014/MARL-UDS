@@ -164,7 +164,6 @@ class Ast:
                 action = []
                 observ = []
                 for i in range(self.n_agents):
-                    # o = [precip/total_rain,tank_inflow[i],tank_outflow[i],depth[i]]
                     o = precip+[in_depth[i],out_depth[i],depth[i]]
                     if sensi is not None:
                         o = [max(random.gauss(j,sensi*j),0) for j in o]
