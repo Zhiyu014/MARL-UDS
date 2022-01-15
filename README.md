@@ -5,16 +5,16 @@ The SWMM model [Astlingen](https://github.com/open-toolbox/SWMM-Astlingen) is th
 
 ## 4.1 Synthenic Rainfall
 - All the codes and SWMM inp files for Uncontrolled, BC and EFD under synthenic rainfall.
-- 'model' contains the parameters of trained agents and the training episode history.
-- 'train' contains files of the training events.
-- 'test' contains the testing models, results data and figures included in the paper.
+- `model` contains the parameters of trained agents and the training episode history.
+- `train` contains files of the training events.
+- `test` contains the testing models, results data and figures included in the paper.
 
 ## 4.2 Historical rainfall
 - All the codes and SWMM inp files for control strategies under historical rainfall.
 - Rainfall series data from [Astlingen](https://github.com/open-toolbox/SWMM-Astlingen).
-- 'model' contains the parameters of trained agents and the training episode history.
-- 'train' contains files of the training events.
-- 'test' contains the testing models, results data and figures included in the paper.
+- `model` contains the parameters of trained agents and the training episode history.
+- `train` contains files of the training events.
+- `test` contains the testing models, results data and figures included in the paper.
 
 ## 5.1 IQL
 - Codes and data for independent Q-learning.
