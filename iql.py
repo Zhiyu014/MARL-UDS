@@ -52,7 +52,7 @@ class IQL:
         self.optimizer = optimizer
 
         self.name = 'IQL'
-
+        self.model_dir = model_dir
     
     def update_memory(self, s,s_,r,a,num):
         if self.RGs is None:
@@ -113,7 +113,7 @@ class IQL:
     def _train_on_agent(self,model,o,acts,target):
         with GradientTape() as tape:
             tape.watch(o)
-            y_pred = reduce_sum(model(o)*one_hot(acts,self.action_size))
+            y_pred = reduce_sum(model(o)*one_hot(acts,self.action_size),axis=1)
             loss_value = self.loss_fn(target, y_pred)
         grads = tape.gradient(loss_value, model.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, model.trainable_variables))
@@ -145,7 +145,7 @@ class IQL:
             acts = a[:,idx]
             target_q_value = reduce_sum(agent.target_model(o_[:,idx,:])*one_hot(argmax_actions,self.action_size),axis=1)
             target = r + self.gamma * target_q_value
-            y_pred = reduce_sum(agent.model(o[:,idx,:])*one_hot(acts,self.action_size))
+            y_pred = reduce_sum(agent.model(o[:,idx,:])*one_hot(acts,self.action_size),axis=1)
             los = self.loss_fn(target, y_pred)
             loss.append(los.numpy())   
         return loss

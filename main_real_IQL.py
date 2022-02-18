@@ -5,7 +5,7 @@ Created on Thu Aug 19 10:58:18 2021
 @author: MOMO
 """
 from env_swmm_real import Ast
-from iql2 import IQL
+from iql import IQL
 from qagent import QAgent
 from memory import RandomMemory
 from tensorflow.keras import losses,optimizers

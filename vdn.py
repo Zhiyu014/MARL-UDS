@@ -114,7 +114,7 @@ class VDN:
                     for idx,agent in enumerate(self.agents)]
         target_q_tot = reduce_sum(convert_to_tensor(target_q_values),axis=0)
         
-        r = expand_dims(r, 1)
+        # r = expand_dims(r, 1)
         
         # target_q_values = self.target_model(o_, target_masks)
         discounted_reward_batch = self.gamma * target_q_tot
@@ -185,7 +185,7 @@ class VDN:
                     for idx,agent in enumerate(self.agents)]
         target_q_tot = reduce_sum(convert_to_tensor(target_q_values),axis=0)
         
-        r = expand_dims(r, 1)
+        # r = expand_dims(r, 1)
         
         # target_q_values = self.target_model(o_, target_masks)
         discounted_reward_batch = self.gamma * target_q_tot
