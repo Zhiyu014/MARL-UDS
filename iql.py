@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Aug 18 16:23:18 2021
-
 @author: MOMO
 """
 from tensorflow import one_hot,convert_to_tensor,GradientTape,transpose,cast,float64,reduce_sum,eye

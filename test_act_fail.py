@@ -8,7 +8,8 @@ Created on Mon Feb  7 11:46:23 2022
 from env_swmm_real import Ast
 from Cen_RL import Cen_RL
 from vdn import VDN
-# import tqdm
+from iql import IQL
+
 from os import listdir
 from os.path import exists
 import matplotlib.pyplot as plt
@@ -32,7 +33,8 @@ cen_rl = Cen_RL(action_size = env.action_size)
 cen_rl.load(model_dir='./model/DQN/')
 vdnn = VDN(action_size = env.action_size,RGs = [2,0,2,1])
 vdnn.load(model_dir='./model/VDN/')
-
+iqll = IQL(action_size = env.action_size,RGs = [2,0,2,1])
+iqll.load(model_dir='./model/IQL/0221/re/')
 
 fail_dir = './test/act_fail/'
 inps = [inp for inp in listdir(fail_dir) if inp.endswith('.inp') and 'DQN' in inp]
@@ -43,15 +45,15 @@ times = [(read_inp_file(fail_dir+inp).OPTIONS.START_DATE,
 times = [(tu[0].strftime('%m/%d/%Y')+' '+tu[1].strftime('%H:%M:%S'),
           tu[2].strftime('%m/%d/%Y')+' '+tu[3].strftime('%H:%M:%S')) for tu in times]
 
-columns = ['BC','DQN','VDN']
 datas = []
 cen_datas = []
-refers = []
+refers = np.load(fail_dir+'fail_refer.npy')
 for idx,time in enumerate(times):
     datestr = time[0][:10]
     env.filedir = fail_dir + inps[idx]
     file = env.filedir
-    files = [env.BC_inp,env.filedir,env.filedir.replace('DQN','VDN')]
+    files = [env.BC_inp,env.filedir.replace('DQN','IQL'),env.filedir,env.filedir.replace('DQN','VDN')]
+    test_reward,acts,_ = env.test(iqll,time,filedir=files[1])
     test_reward,acts,_ = env.test(cen_rl,time,filedir=file)
     test_reward,acts,_ = env.test(vdnn,time,filedir=files[-1])
 
@@ -70,7 +72,7 @@ for idx,time in enumerate(times):
             vol = read_rpt_file(env.filedir.replace('inp','rpt')).flow_routing_continuity['Flooding Loss']['Volume_10^6 ltr']
             vols.append(vol) 
         volss.append(vols)
-    volss.append([refers[0] for _ in range(50)])
+    volss.append([refers[idx][0] for _ in range(50)])
     data = array(volss)
     cen_datas.append(data)
     
@@ -87,19 +89,22 @@ for idx,time in enumerate(times):
     
 np.save(fail_dir+'cen_fail_data.npy',np.array(cen_datas))
 np.save(fail_dir+'fail_data.npy',np.array(datas))
-# np.save(fail_dir+'fail_refer.npy',np.array(refers))
+np.save(fail_dir+'fail_refer.npy',np.array(refers))
 
 
 cen_datas = np.load(fail_dir+'cen_fail_data.npy')
 datas = np.load(fail_dir+'fail_data.npy')
 refers = np.load(fail_dir+'fail_refer.npy')
-columns = ['BC','DQN','VDN']
-fig = plt.figure(figsize=(30,5),dpi = 600)
+
+columns = ['BC','IQL','DQN','VDN']
+fig = plt.figure(figsize=(15,15),dpi = 600)
 
 for i,data in enumerate(cen_datas):
+    # fig = plt.figure(figsize=(10,8),dpi = 600)
+    # ax = fig.add_subplot(1,1,1)
+    ax = fig.add_subplot(2,2,i+1)
     refer = refers[i]
-    ax = fig.add_subplot(1,5,i+1)
-    labels = [str(i*0.1)[:3] for i in range(1,11)]
+    labels = [str(j*0.1)[:3] for j in range(1,11)]
     data = data.T
     cen_stats = cbook.boxplot_stats(data, bootstrap=10000)
     stats = cbook.boxplot_stats(datas[i].T, bootstrap=10000)
@@ -115,14 +120,15 @@ for i,data in enumerate(cen_datas):
     for med in dat['medians']:
         med.set_color('black')
     lines = []
-    colors = ['orange','red','green']
+    colors = ['blue','orange','red','green']
     for j,ref in enumerate(refer):
         line = ax.axhline(y=ref,linestyle='--',label=columns[j],color=colors[j])
         lines.append(line)
     ax.set_title(times[i][0][:10])
     ax.legend(lines+[cen['boxes'][0],dat['boxes'][0]],[l.get_label() for l in lines]+['DQN_fail','DQN&VDN'],loc='upper left')
     plt.xticks([1,2,3,4,5,6,7,8,9,10],labels)
-    ax.set_xlabel('Failure probability')
-    ax.set_ylabel('Accumulated CSO volume ($\mathregular{10^3} \mathregular{m^3}$)')
+    ax.set_xlabel('Failure probability',fontsize=14)
+    ax.set_ylabel('Accumulated CSO volume ($\mathregular{10^3} \mathregular{m^3}$)',fontsize=14)
+    # fig.savefig(fail_dir+'fail%s.png'%times[i][0][:10].replace('/','_'),dpi=600)
 fig.savefig(fail_dir+'fail.png',dpi=600)
     

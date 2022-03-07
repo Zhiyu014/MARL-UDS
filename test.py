@@ -24,7 +24,7 @@ plt.rc('font',family = 'Times New Roman')
 
 
 # init SWMM environment and agents
-env = Ast(inp_test_file='./test/Real_{0}_{1}.inp')
+env = Ast(inp_test_file='./test3/Real_{0}_{1}.inp')
 cen_rl = Cen_RL(action_size = env.action_size)
 cen_rl.load(model_dir='./model/DQN/')
 vdnn = VDN(action_size = env.action_size,RGs = [2,0,2,1])
@@ -75,6 +75,7 @@ for idx,time in enumerate(times):
     
     # Simulation
     dt_time = datetime.strptime(time[0],'%m/%d/%Y %H:%M:%S')
+#    if exists(env.filedir)==False:
     for f in [iqll,cen_rl,vdnn]:
         filedir = env.inp_test_file.format(f.name,str(dt_time.date())+'-'+str(dt_time.hour))
         if exists(filedir.replace('inp','out')) and exists(filedir.replace('inp','rpt')):
@@ -136,98 +137,11 @@ test_floodings.round(3).to_csv('./test/results/floodings.csv')
 
 
 
-# Process: tank depths & orifice settings
-# event in 10/01/2009
 
-columns = ['DQN','IQL','VDN']
-time = ('10/01/2009 14:00:00','')
-dt_time = datetime.strptime(time[0],'%m/%d/%Y %H:%M:%S')
-files = []
-for f in [cen_rl,iqll,vdnn]:
-    env.filedir = env.inp_test_file.format(f.name,str(dt_time.date())+'-'+str(dt_time.hour))
-    # if exists(env.filedir.replace('inp','out'))==False:
-    test_reward,acts,_ = env.test(f,time,filedir=env.filedir)
-    files.append(env.filedir)
-inp = read_inp_file(files[-1])
-rains = pd.DataFrame()
-for k,v in inp.TIMESERIES.items():
-    rain = v.frame
-    rains[k] = rain
-RG = {2:[('rain3','#2ca02c')],3:[('rain1','#1f77b4'),('rain2','#d62728')],
-      4:[('rain3','#2ca02c')],6:[('rain2','#d62728')]}
-fig = plt.figure(figsize=(30,10),dpi = 600)
-objs = []
-for idx,i in enumerate([2,3,4,6]):
-    depths = []
-    settings = []
-    for file in files:
-        out = read_out_file(file.replace('inp','out'))
-        depths.append(out.get_part('node','T%s'%i)['Depth_above_invert'])
-        settings.append(out.get_part('link','V%s'%i)['Capacity'])
-        out.close()
-    
-    ax = fig.add_subplot(2,4,idx+1)
-    ax.set_title('T%s'%i,fontsize=16)
-    for col in RG[i]:
-        ba = ax.bar(rains.index,rains[col[0]],
-                    label=col[0],color=col[1],width=0.003,alpha=0.5,zorder=1)
-        if idx<=1:
-            objs.append(ba)
-    ax2 = ax.twinx()
-    ax.invert_yaxis()
-    ax.set_ylim((rains.max().max()*2,0))
-    
-    
 
-    time = settings[0].index.tolist()
-    time = [t+timedelta(minutes=i) for t in time for i in range(5)]
-    capa = [[ca for ca in setting.values.tolist() for i in range(5)] 
-            for setting in settings]
-    ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    
-    ax2.plot(time,capa[0],'-',label = 'DQN')
-    ax2.plot(time,capa[1],'--',label = 'IQL')  
-    ax2.plot(time,capa[2],'-.',label = 'VDN')  
-    ax2.set_ylim([0,1.2])    
-    
-    ax2.yaxis.set_ticks_position('right')
-    ax2.yaxis.set_label_position('right')
-    if idx==0:
-        ax.set_ylabel('Rainfall Volume (mm)',fontsize=16)
-    if idx==3:
-        ax2.set_ylabel('Orifice Setting',fontsize=16)
-    ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+       
     
     
-    ax = fig.add_subplot(2,4,idx+5)
-    for col in RG[i]:
-        ba = ax.bar(rains.index,rains[col[0]],
-                    label=col[0],color=col[1],width=0.003,alpha=0.5,zorder=1)
-    ax2 = ax.twinx()
-    ax.invert_yaxis()
-    ax.set_ylim((rains.max().max()*2,0))
-
-    time = depths[0].index.tolist()
-    dep = [depth.values.tolist()
-           for depth in depths]
-    
-    depth = ax2.plot(time,dep[0],'-',label = 'DQN')
-    depth2 = ax2.plot(time,dep[1],'--',label = 'IQL')
-    depth3 = ax2.plot(time,dep[2],'-.',label = 'VDN')
-    ax2.set_ylim([0,5.1])    
-    
-    ax2.yaxis.set_ticks_position('right')
-    ax2.yaxis.set_label_position('right')
-    if idx==0:
-        ax.set_ylabel('Rainfall Volume (mm)',fontsize=16)
-    if idx==3:
-        ax2.set_ylabel('Tank Depth (m)',fontsize=16)
-    ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-objs.sort(key=lambda x:x.get_label())
-objs += depth+depth2+depth3
-fig.legend(objs,[l.get_label() for l in objs],loc=8,ncol=6,fontsize=16)
-fig.savefig('./test/results/process.png')    
-
     
     
     

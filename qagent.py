@@ -64,7 +64,7 @@ class QAgent:
                 a = self.model(x)[0].numpy().tolist()
             else:
                 # Get random action
-                a = [random.random() for _ in range(self.action_size)]
+                a = [random.random() for _ in range(self.output_size)]
         else:
             a = self.model(x)[0].numpy().tolist()
         return a

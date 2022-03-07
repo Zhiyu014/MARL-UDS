@@ -173,18 +173,16 @@ class Ast:
                     reward = -flood/inflow
                     
                 outfall = routing['outflow'] - cum_outfall
-                cum_outfall = routing['outflow']
-
-
-                          
-                if fail is not None:
-                    is_fail = [int(random.random()>fail) for _ in range(self.n_agents)]
-                    depth = [j*is_fail[i] for i,j in enumerate(depth)]       
-                    in_depth = [j*is_fail[i] for i,j in enumerate(in_depth)]       
-                    out_depth = [j*is_fail[i] for i,j in enumerate(out_depth)]       
+                cum_outfall = routing['outflow'] 
 
                 state = precip + in_depth + out_depth + depth
                 
+                if fail is not None:
+                    is_fail = [1,1,1,1]+[int(random.random()>fail) for _ in range(self.observ_size-4)]
+                    if f.name!='DQN':
+                        is_fail[-4:] = [1,1,1,1]
+                    state = [s*is_fail[i] for i,s in enumerate(state)]
+
                 if sensi is not None:
                     state = [max(random.gauss(j,sensi*j),0) for j in state]          
                 
