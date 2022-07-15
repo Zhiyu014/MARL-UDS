@@ -6,12 +6,7 @@ Created on Thu Aug 19 19:26:49 2021
 """
 
 import random
-from collections import deque, namedtuple
-
-Experience = namedtuple(
-    'Experience',
-    'state0, observations0, action, reward,observations1, state1')
-
+from collections import deque
 
 class Memory():
 
@@ -23,7 +18,7 @@ class Memory():
 
 
 class RandomMemory(Memory):
-    def __init__(self,limit,update_num=47, agent_num=6):
+    def __init__(self,limit,update_num=47, agent_num=4):
         super(Memory, self).__init__()
         self.update_num = update_num
         self.experiences = deque(maxlen=limit)
@@ -34,9 +29,6 @@ class RandomMemory(Memory):
         return len(self.experiences)
     
     def sample(self, batch_size):
-        assert batch_size > 1, "batch_size must be positive integer"
-
-
         batch_size = min(batch_size, len(self.experiences))
         mini_batch = random.sample(self.experiences, batch_size)
         # mini_batch = [self.experiences[i] for i in batch_num]
@@ -44,10 +36,6 @@ class RandomMemory(Memory):
         action_batch = [ba[1] for ba in mini_batch]
         reward_batch = [ba[2] for ba in mini_batch]
         next_observation_batch = [ba[3] for ba in mini_batch]
-
-
-        assert len(action_batch) == batch_size
-
         return observation_batch, action_batch, reward_batch, next_observation_batch
         
     def append(self, observation, action, reward,next_observation):
