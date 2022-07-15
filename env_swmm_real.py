@@ -191,7 +191,10 @@ class Ast:
                 if inte_fail is not None:
                     is_fail = [int(random.random()>inte_fail) for _ in range(self.n_agents)]
                     action1 = f1.act(state,train=False)
-                    action2 = f2.act(state,train=False)
+                    if f2 == 'BC':
+                        action2 = [1,1,1,1]
+                    else:
+                        action2 = f2.act(state,train=False)
                     action = array(action1)*array(is_fail) + array(action2)*(1-array(is_fail))
                     action = action.tolist()
 

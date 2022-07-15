@@ -34,7 +34,7 @@ cen_rl.load(model_dir='./model/DQN/')
 vdnn = VDN(action_size = env.action_size,RGs = [2,0,2,1])
 vdnn.load(model_dir='./model/VDN/')
 iqll = IQL(action_size = env.action_size,RGs = [2,0,2,1])
-iqll.load(model_dir='./model/IQL/0221/re/')
+iqll.load(model_dir='./model/IQL/')
 
 fail_dir = './test/act_fail/'
 inps = [inp for inp in listdir(fail_dir) if inp.endswith('.inp') and 'DQN' in inp]
@@ -47,7 +47,9 @@ times = [(tu[0].strftime('%m/%d/%Y')+' '+tu[1].strftime('%H:%M:%S'),
 
 datas = []
 cen_datas = []
-refers = np.load(fail_dir+'fail_refer.npy')
+cenbc_datas = []
+refers = []
+# refers = np.load(fail_dir+'fail_refer.npy')
 for idx,time in enumerate(times):
     datestr = time[0][:10]
     env.filedir = fail_dir + inps[idx]
@@ -56,14 +58,12 @@ for idx,time in enumerate(times):
     test_reward,acts,_ = env.test(iqll,time,filedir=files[1])
     test_reward,acts,_ = env.test(cen_rl,time,filedir=file)
     test_reward,acts,_ = env.test(vdnn,time,filedir=files[-1])
-
-
-    # no_reward = env.test_no(time)
     bc_reward = env.test_bc(time)
-    # efd_reward = env.test_efd(time)
     
     refers.append([read_rpt_file(file.replace('inp','rpt')).flow_routing_continuity['Flooding Loss']['Volume_10^6 ltr'] 
     for file in files])
+    
+    # Failure scenario of DQN
     volss = []
     for f in range(1,10):
         vols = []
@@ -76,6 +76,19 @@ for idx,time in enumerate(times):
     data = array(volss)
     cen_datas.append(data)
     
+    # DQN with BC backup
+    volss = []
+    for f in range(1,11):
+        vols = []
+        for j in range(50):
+            test_reward,_,_ = env.test(cen_rl,time,inte_fail=0.1*f,f1=cen_rl,f2='BC',filedir=env.filedir)
+            vol = read_rpt_file(env.filedir.replace('inp','rpt')).flow_routing_continuity['Flooding Loss']['Volume_10^6 ltr']
+            vols.append(vol) 
+        volss.append(vols)
+    data = array(volss)
+    cenbc_datas.append(data)
+    
+    # DQN with VDN backup
     volss = []
     for f in range(1,11):
         vols = []
@@ -87,48 +100,7 @@ for idx,time in enumerate(times):
     data = array(volss)
     datas.append(data)
     
+np.save(fail_dir+'cenbc_fail_data.npy',np.array(cenbc_datas))
 np.save(fail_dir+'cen_fail_data.npy',np.array(cen_datas))
 np.save(fail_dir+'fail_data.npy',np.array(datas))
 np.save(fail_dir+'fail_refer.npy',np.array(refers))
-
-
-cen_datas = np.load(fail_dir+'cen_fail_data.npy')
-datas = np.load(fail_dir+'fail_data.npy')
-refers = np.load(fail_dir+'fail_refer.npy')
-
-columns = ['BC','IQL','DQN','VDN']
-fig = plt.figure(figsize=(15,15),dpi = 600)
-
-for i,data in enumerate(cen_datas):
-    # fig = plt.figure(figsize=(10,8),dpi = 600)
-    # ax = fig.add_subplot(1,1,1)
-    ax = fig.add_subplot(2,2,i+1)
-    refer = refers[i]
-    labels = [str(j*0.1)[:3] for j in range(1,11)]
-    data = data.T
-    cen_stats = cbook.boxplot_stats(data, bootstrap=10000)
-    stats = cbook.boxplot_stats(datas[i].T, bootstrap=10000)
-    
-    cen = ax.bxp(cen_stats,patch_artist=True,showfliers=False,positions=(0.7,1.7,2.7,3.7,4.7,5.7,6.7,7.7,8.7,9.7),widths=0.3)    
-    for patch in cen['boxes']:
-        patch.set_facecolor('salmon')
-    for med in cen['medians']:
-        med.set_color('black')
-    dat = ax.bxp(stats,patch_artist=True,showfliers=False,positions=(1.1,2.1,3.1,4.1,5.1,6.1,7.1,8.1,9.1,10.1),widths=0.3)
-    for patch in dat['boxes']:
-        patch.set_facecolor('violet')   
-    for med in dat['medians']:
-        med.set_color('black')
-    lines = []
-    colors = ['blue','orange','red','green']
-    for j,ref in enumerate(refer):
-        line = ax.axhline(y=ref,linestyle='--',label=columns[j],color=colors[j])
-        lines.append(line)
-    ax.set_title(times[i][0][:10])
-    ax.legend(lines+[cen['boxes'][0],dat['boxes'][0]],[l.get_label() for l in lines]+['DQN_fail','DQN&VDN'],loc='upper left')
-    plt.xticks([1,2,3,4,5,6,7,8,9,10],labels)
-    ax.set_xlabel('Failure probability',fontsize=14)
-    ax.set_ylabel('Accumulated CSO volume ($\mathregular{10^3} \mathregular{m^3}$)',fontsize=14)
-    # fig.savefig(fail_dir+'fail%s.png'%times[i][0][:10].replace('/','_'),dpi=600)
-fig.savefig(fail_dir+'fail.png',dpi=600)
-    
