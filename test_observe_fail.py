@@ -54,9 +54,9 @@ for idx,time in enumerate(times):
     datestr = time[0][:10]
     env.filedir = fail_dir + inps[idx]
     file = env.filedir
-    files = [env.BC_inp,env.filedir.replace('DQN','IQL'),env.filedir,env.filedir.replace('DQN','VDN')]
-    test_reward,acts,_ = env.test(iqll,time,filedir=files[1])
+    files = [env.BC_inp,env.filedir,env.filedir.replace('DQN','IQL'),env.filedir.replace('DQN','VDN')]
     test_reward,acts,_ = env.test(cen_rl,time,filedir=file)
+    test_reward,acts,_ = env.test(iqll,time,filedir=files[2])
     test_reward,acts,_ = env.test(vdnn,time,filedir=files[-1])
     bc_reward = env.test_bc(time)
     

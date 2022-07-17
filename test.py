@@ -64,7 +64,7 @@ times = [(s,e) for s,e in zip(events['Start'],events['End'])]
 test_datestrs = [ti[0][:10] for ti in times]
 
 
-columns = ['BC','IQL','DQN','VDN']
+columns = ['BC','DQN','IQL','VDN']
 test_floodings = pd.DataFrame(columns = ['Date','Start_Time','End_Time','Duration','Precipitation']+columns)
 
 
@@ -76,7 +76,7 @@ for idx,time in enumerate(times):
     # Simulation
     dt_time = datetime.strptime(time[0],'%m/%d/%Y %H:%M:%S')
 #    if exists(env.filedir)==False:
-    for f in [iqll,cen_rl,vdnn]:
+    for f in [cen_rl,iqll,vdnn]:
         filedir = env.inp_test_file.format(f.name,str(dt_time.date())+'-'+str(dt_time.hour))
         if exists(filedir.replace('inp','out')) and exists(filedir.replace('inp','rpt')):
             continue
@@ -94,7 +94,7 @@ for idx,time in enumerate(times):
         rains[k] = rain
     # Get flood data
     files = [env.inp_test_file.format(name,str(dt_time.date())+'-'+str(dt_time.hour)) 
-                          for name in ['BC',iqll.name,cen_rl.name,vdnn.name]]
+                          for name in ['BC',cen_rl.name,iqll.name,vdnn.name]]
     floods,_,floodings = read_flooding(files,labels=columns,cumulative=False)
     results = pd.merge(rains,floodings,left_index=True,right_index=True)
     
