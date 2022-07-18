@@ -21,6 +21,8 @@ import pandas as pd
 from datetime import datetime,timedelta
 from swmm_api import read_out_file,read_rpt_file,read_inp_file
 plt.rc('font',family = 'Times New Roman')
+colors = {'IQL':('#1f77b4','-'),'VDN':('#2ca02c','-.'), 
+          'DQN':('#ff7f0e','--'),'BC':('#d62728','-')}
 
 
 # init SWMM environment and agents
@@ -107,7 +109,8 @@ for idx,time in enumerate(times):
     ax2 = ax.twinx()
     ax.invert_yaxis()
     for col in columns:
-        ax2.plot(results[col].index,results[col],label=col,zorder=2)
+        ax2.plot(results[col].index,results[col],
+                 colors[col][1],color=colors[col][0],label=col,zorder=2)
     ax2.set_title(datestr,fontsize=16)
     ax2.set_xlabel('Time (H:M)',fontsize=16)
     ax2.set_ylabel('CSO ($\mathregular{m^3/s}$)',fontsize=16)
