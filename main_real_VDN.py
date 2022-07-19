@@ -27,7 +27,7 @@ env = Ast()
     
 update_num = env.update_num
 basic_batch_size = 512
-basic_update_times = 20
+basic_update_times = 10
 
 memory = RandomMemory(limit=700000, agent_num=4,update_num = update_num)
 
