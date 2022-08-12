@@ -10,8 +10,8 @@ from tensorflow.keras.activations import sigmoid,elu,relu,linear
 from tensorflow.keras.layers import LayerNormalization,ReLU,BatchNormalization
 from tensorflow import expand_dims,matmul
 from numpy import argmax,array,save,load
-from agent.qagent import QAgent
-from agent.qragent import QRAgent
+from .qagent import QAgent
+from .qragent import QRAgent
 from os.path import join
 
 class VDN:

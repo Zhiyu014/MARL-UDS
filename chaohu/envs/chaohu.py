@@ -4,8 +4,8 @@ Created on Tue Aug  2 20:47:01 2022
 
 @author: MOMO
 """
-from env.environment_chaohu import env_chaohu
-from env.utilities import eval_closing_reward,eval_control
+from .environment_chaohu import env_chaohu
+# from utilities import eval_closing_reward,eval_control
 # from pystorms.networks import load_network
 # from pystorms.config import load_config
 from pystorms.scenarios import scenario

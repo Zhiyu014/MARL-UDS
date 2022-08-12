@@ -4,8 +4,8 @@ Created on Thu Aug 19 10:58:18 2021
 
 @author: MOMO
 """
-from env.chaohu import chaohu
-from env.utilities import generate_file,eval_control
+from envs.chaohu import chaohu
+from envs.utilities import generate_file,eval_control
 from agent.vdn import VDN
 from utils.memory import RandomMemory
 # from rnmemory import Recurrent_RandomMemory
@@ -15,6 +15,7 @@ import yaml
 import os
 # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+HERE = os.path.dirname(__file__)
 
 def interact_steps(env,f,event=None,train=True,base=None):
     trajs = []
@@ -55,7 +56,7 @@ def hc_test(env,event=None):
 
 if __name__ == '__main__':
 # init SWMM environment and arguments
-    hyps = yaml.load(open('./utils/config.yaml', "r"), yaml.FullLoader)
+    hyps = yaml.load(open(os.path.join(HERE,'utils','config.yaml'), "r"), yaml.FullLoader)
     env = chaohu()
     env_args = env.get_args(if_mac=hyps[env.config['env_name']]['VDN']['if_mac'])
     args = Arguments(env_args,hyp=hyps[env_args['env_name']]['VDN'])
