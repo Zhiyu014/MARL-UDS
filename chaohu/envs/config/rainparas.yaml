@@ -1,0 +1,38 @@
+# Designed rainfall parameters range
+
+# Rainfall pattern
+rainfall_pattern: "Chicago (Keifer & Chu, 1957)"
+# name of scenario
+name: chaohu
+# Rainfall duration (min)
+dura: 120
+# Time resolution (min)
+delta: 5
+# Simulation duration (min)
+simu_dura: 360
+# Set rainfall parameters
+P:
+  !!python/tuple
+  - 1
+  - 5    
+params:
+  A:
+    !!python/tuple
+    - 21.9682
+    - 38.8565
+  C:
+    !!python/tuple
+    - 0.8057
+    - 2.201
+  n:
+    !!python/tuple
+    - 0.8301
+    - 1.0792
+  b:
+    !!python/tuple
+    - 16.41
+    - 26.5
+  r:
+    !!python/tuple
+    - 0.3
+    - 0.8
