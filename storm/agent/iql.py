@@ -1,0 +1,212 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Aug 18 16:23:18 2021
+
+@author: MOMO
+"""
+from tensorflow import one_hot,convert_to_tensor,GradientTape,reduce_max,float32,reduce_sum
+from tensorflow import keras as ks
+from tensorflow import expand_dims,matmul
+from .qagent import QAgent
+from .qragent import QRAgent
+from numpy import argmax,array,save,load
+from os.path import join
+
+class IQL:
+    def __init__(self,
+            observ_space: list,
+            action_space: list,
+            args = None):
+
+
+        self.recurrent = getattr(args,"if_recurrent",False)
+        self.n_agents = getattr(args, "n_agents", 2)
+        self.gamma = getattr(args, "gamma", 0.98)
+        self.batch_size = getattr(args,"batch_size",256)
+        self.learning_rate = getattr(args,"learning_rate",1e-5)
+        self.repeat_times = getattr(args,"repeat_times",2)
+        self.update_interval = getattr(args,"update_interval",0.005)
+        self.target_update_func = self._hard_update_target_model if self.update_interval >1\
+             else self._soft_update_target_model
+
+        if self.recurrent:
+            self.seq_len = getattr(args,"seq_len",3)
+            self.agents = [QRAgent(action_space[i],len(observ_space[i]),self.seq_len,args) 
+                           for i in range(self.n_agents)]       
+        else:
+            self.agents = [QAgent(action_space[i],len(observ_space[i]),args)
+                           for i in range(self.n_agents)]
+        self.observ_space = observ_space
+        self.action_space = action_space
+        self.episode = 0
+        self.action_table = getattr(args,'action_table')
+
+        self.state_norm = array([[i for _ in range(args.state_shape)] for i in range(2)])
+        # self.reward_norm = (0,1)
+
+        self.trainable_variables = []
+        self.target_trainable_variables = []
+        for agent in self.agents:
+            self.trainable_variables += agent.model.trainable_variables
+            self.target_trainable_variables += agent.target_model.trainable_variables
+
+        self.loss_fn = ks.losses.get(args.loss_function)
+        self.optimizer = ks.optimizers.get(args.optimizer)
+        self.optimizer.learning_rate = self.learning_rate
+
+        self.name = getattr(args,"agent_class","IQL")
+        self.model_dir = args.cwd
+
+        if args.if_load:
+            self.load()
+
+    def act(self,state,train):
+        action = []
+        for i,agent in enumerate(self.agents):
+            if self.recurrent:
+                # Normalize the state
+                state = [self._normalize_state(obs) for obs in state]
+                state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
+                    if len(state)<self.seq_len else state
+                o = [[obs[idx] for idx in self.observ_space[i]] for obs in state]
+            else:
+                # Normalize the state
+                state = self._normalize_state(state)
+                o = [state[idx] for idx in self.observ_space[i]]
+            a = agent.act(o,train)
+            act = argmax(a)
+            action.append(act)
+        return action
+
+    def convert_action_to_setting(self,action):
+        setting = self.action_table[tuple(action)]
+        return setting
+
+    def update_net(self,memory,batch_size=None):
+        # Update the state & reward normalization paras
+        self.state_norm = memory.get_state_norm()
+        # self.reward_norm = memory.get_reward_norm()
+
+        batch_size = self.batch_size if batch_size is None else batch_size
+        update_times = int(1 + 4 * len(memory) / memory.limit) * self.repeat_times
+        losses = []
+        for _ in range(update_times):
+            s, a, r, s_, d = memory.sample(batch_size)
+            s,s_ = self._normalize_state(s),self._normalize_state(s_)
+            o,o_ = self._split_observ(s),self._split_observ(s_)
+            loss = self._experience_replay(o, a, r, o_, d)
+            self.target_update_func()
+            losses.append(loss)
+        # Decay the exploration epsilon
+        self._epsilon_update()
+        return losses
+
+    def evaluate_net(self,trajs):
+        s, a, r, s_, d = [[traj[i] for traj in trajs] for i in range(5)]
+        s,s_ = self._normalize_state(s),self._normalize_state(s_)
+
+        if self.recurrent:
+            s = [[s[0] for _ in range(self.seq_len-i-1)]+s[:i+1] for i in range(self.seq_len-1)]+\
+                [s[i:i+self.seq_len] for i in range(len(s)-self.seq_len+1)]
+            s_ = [[s_[0] for _ in range(self.seq_len-i-1)]+s_[:i+1] for i in range(self.seq_len-1)]+\
+                [s_[i:i+self.seq_len] for i in range(len(s_)-self.seq_len+1)]      
+
+        o,o_ = self._split_observ(s),self._split_observ(s_)
+        loss = self._test_loss(o ,a ,r ,o_ ,d)
+        return loss
+        
+
+    def _normalize_state(self,s):
+        # Normalize the state & reward
+        s = ((array(s)-self.state_norm[0,:])/(self.state_norm[1,:]+1e-5)).tolist()
+        # r = ((array(r)-self.reward_norm[0])/self.reward_norm[1]).tolist()
+        return s
+
+    def _split_observ(self,s):
+        # Split as multi-agent & convert to tensor
+        if self.recurrent:
+            o = [convert_to_tensor([[[sis[idx] for idx in self.observ_space[i]]
+                                   for sis in si] for si in s],dtype=float32) 
+                                   for i in range(self.n_agents)]
+        else:
+            o = [convert_to_tensor([[si[idx] for idx in self.observ_space[i]]
+                                   for si in s],dtype=float32) 
+                                   for i in range(self.n_agents)]
+        return o
+
+
+    def _experience_replay(self, o, a, r, o_, d):
+        o,r,o_,d = [convert_to_tensor(i,dtype=float32) for i in [o,r,o_,d]]
+        a = convert_to_tensor(a)
+
+        loss = []
+        for idx,agent in enumerate(self.agents):
+            target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
+            target = r + self.gamma * target_q_value * (1-d)
+            # los = self._train_on_agent(agent.model,o[idx],a[:,idx],target)
+            with GradientTape() as tape:
+                tape.watch(o)
+                y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_space[idx]),axis=1)
+                loss_value = self.loss_fn(target, y_pred)
+            grads = tape.gradient(loss_value, agent.model.trainable_variables)
+            self.optimizer.apply_gradients(zip(grads, agent.model.trainable_variables))
+            loss.append(loss_value.numpy())
+        
+        return loss
+
+    def _test_loss(self, o, a, r, o_, d):
+        o,r,o_,d = [convert_to_tensor(i,dtype=float32) for i in [o,r,o_,d]]
+        a = convert_to_tensor(a)
+
+        loss = []
+        for idx,agent in enumerate(self.agents):
+            target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
+            target = r + self.gamma * target_q_value * (1-d)
+            y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_space[idx]),axis=1)
+            los = self.loss_fn(target, y_pred)
+            loss.append(los.numpy())   
+        return loss
+
+
+    def _epsilon_update(self):
+        for agent in self.agents:
+            agent._epsilon_update()
+            
+
+    def _hard_update_target_model(self):
+        if self.episode%self.update_interval == 0:
+            for agent in self.agents:
+                agent._hard_update_target_model()
+        self.episode += 1
+
+    def _soft_update_target_model(self):
+        for agent in self.agents:
+            agent._soft_update_target_model(self.update_interval)
+        self.episode += 1
+
+
+    def save(self,model_dir=None,norm=True,agents=True):
+        # Save the state normalization paras
+        if norm:
+            if model_dir is None:
+                save(join(self.model_dir,'state_norm.npy'),self.state_norm)
+            else:
+                save(join(model_dir,'state_norm.npy'),self.state_norm)
+
+        # Save the agent paras
+        if agents:
+            for i,agent in enumerate(self.agents):
+                agent.save(i,model_dir)
+            
+    def load(self,model_dir=None,norm=True,agents=True):
+        # Load the state normalization paras
+        if norm:
+            if model_dir is None:
+                self.state_norm = load(join(self.model_dir,'state_norm.npy'))
+            else:
+                self.state_norm = load(join(model_dir,'state_norm.npy'))
+
+        # Load the agent paras
+        if agents:
+            for i,agent in enumerate(self.agents):
+                agent.load(i,model_dir)
