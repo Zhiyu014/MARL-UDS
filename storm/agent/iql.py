@@ -15,10 +15,10 @@ from os.path import join
 class IQL:
     def __init__(self,
             observ_space: list,
-            action_space: list,
+            action_shape: list,
             args = None):
 
-
+        self.double = getattr(args,"if_double",True)
         self.recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 2)
         self.gamma = getattr(args, "gamma", 0.98)
@@ -31,13 +31,13 @@ class IQL:
 
         if self.recurrent:
             self.seq_len = getattr(args,"seq_len",3)
-            self.agents = [QRAgent(action_space[i],len(observ_space[i]),self.seq_len,args) 
+            self.agents = [QRAgent(action_shape[i],len(observ_space[i]),self.seq_len,args) 
                            for i in range(self.n_agents)]       
         else:
-            self.agents = [QAgent(action_space[i],len(observ_space[i]),args)
+            self.agents = [QAgent(action_shape[i],len(observ_space[i]),args)
                            for i in range(self.n_agents)]
         self.observ_space = observ_space
-        self.action_space = action_space
+        self.action_shape = action_shape
         self.episode = 0
         self.action_table = getattr(args,'action_table')
 
@@ -141,12 +141,16 @@ class IQL:
 
         loss = []
         for idx,agent in enumerate(self.agents):
-            target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
+            if self.double:
+                argmax_actions = ks.backend.argmax(agent.model(o_[idx]))
+                target_q_value = reduce_sum(agent.target_model(o_[idx])*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
+            else:
+                target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
             target = r + self.gamma * target_q_value * (1-d)
             # los = self._train_on_agent(agent.model,o[idx],a[:,idx],target)
             with GradientTape() as tape:
                 tape.watch(o)
-                y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_space[idx]),axis=1)
+                y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                 loss_value = self.loss_fn(target, y_pred)
             grads = tape.gradient(loss_value, agent.model.trainable_variables)
             self.optimizer.apply_gradients(zip(grads, agent.model.trainable_variables))
@@ -160,9 +164,13 @@ class IQL:
 
         loss = []
         for idx,agent in enumerate(self.agents):
-            target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
+            if self.double:
+                argmax_actions = ks.backend.argmax(agent.model(o_[idx]))
+                target_q_value = reduce_sum(agent.target_model(o_[idx])*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
+            else:
+                target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
             target = r + self.gamma * target_q_value * (1-d)
-            y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_space[idx]),axis=1)
+            y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
             los = self.loss_fn(target, y_pred)
             loss.append(los.numpy())   
         return loss

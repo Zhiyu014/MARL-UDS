@@ -1,46 +1,59 @@
-
+from swmm_api import read_inp_file
 from envs.chaohu import chaohu
-from envs.utilities import generate_file,get_depth_setting,get_flood_cso
+from envs.utilities import generate_file,get_depth_setting,get_flood_cso,eval_control,eval_pump
 # from rnmemory import Recurrent_RandomMemory
 from utils.config import Arguments
 import yaml
 import os
 import multiprocessing as mp
+from ea import run_ea
+
 # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
 
 # TODO add predictive control codes
-def predict(event,args,f='VDN'):
+def predict(event,arg,q):
     env = chaohu(swmm_file = event)
-    ctrl = args.agent_class(args.observ_space,args.action_space,args)
+    f = arg.agent_class(arg.observ_space,arg.action_shape,arg)
     done = False
-    actions = []
+    settings = []
     while not done:
         state = env.state()
-        action = ctrl.act(state,train=False)
-        actions.append(action)
-        setting = ctrl.convert_action_to_setting(action)
+        action = f.act(state,train=False)
+        setting = f.convert_action_to_setting(action)
+        settings.append(setting)
         done = env.step(setting)
-        # perf = env.performance()
-    return actions
+    q.put(settings)
 
-def interact_steps(env,f,event=None,train=True,if_predict=False):
+def interact_steps(env,arg,event=None,train=True,if_predict=False):
+    f = arg.agent_class(arg.observ_space,arg.action_shape,arg)
     state = env.reset(event)
     done = False
     while not done:
-        # no prediction
-        action = f.act(state,train)
-        setting = f.convert_action_to_setting(action)
-        # TODO prediction
-        # if if_predict:
-        #     eval_file = env.get_eval_file()
-        #     q = mp.Queue()
-        #     p = mp.Process(target=predict,args=(eval_file,args,))
-        #     p.start()
-        #     p.join()
-        #     actions = q.get()
-        #     ctrl = run_ea(eval_file,actions,args)
+        if if_predict:
+            # get current setting
+            cur_setting = [env.data_log['setting'][ID][-1]
+            for ID in env.config['action_space'] if len(env.data_log['setting'][ID])>0]
+            cur_setting = [0 for _ in env.config['action_space']] if cur_setting == [] else cur_setting
+            
+            # get agent reactions
+            eval_file = env.get_eval_file()
+            q = mp.Queue()
+            p = mp.Process(target=predict,args=(eval_file,arg,q,))
+            p.start()
+            p.join()
+            print("Finish reaction: %s"%env.env.methods['simulation_time']())
+            
+            # run predictive optimization
+            settings = [cur_setting] + q.get()
+            setting = run_ea(eval_file,settings,arg)
+            print("Finish search: %s"%env.env.methods['simulation_time']())
+
+        else:
+            # no prediction
+            action = f.act(state,train)
+            setting = f.convert_action_to_setting(action)
         done = env.step(setting)
         state = env.state()
     perf = env.performance('cumulative')
@@ -67,48 +80,69 @@ def hc_test(env,event=None):
 
 
 if __name__ == '__main__':
-# init SWMM environment and arguments
+    # init SWMM environment and arguments
     env = chaohu()
     hyps = yaml.load(open(os.path.join(HERE,'utils','config.yaml'), "r"), yaml.FullLoader)[env.config['env_name']]
     hyp_test = hyps['test']
 
     # init control agents
-    # ctrls = args.init_ctrls
     ctrls = {}
     for agent in hyp_test['test_agents']:
         hyp = hyps[agent]
+        # update search parameters in the agent arg
+        if hyp_test['if_predict']:
+            hyp.update(hyps['predict'])
         env_args = env.get_args(if_mac=hyp['if_mac'])
-        args = Arguments(env_args,hyp)
-        args.init_before_testing()
-        ctrls[agent] = args.agent_class(args.observ_space,args.action_space,args)
+        arg = Arguments(env_args,hyp)
+        arg.init_before_testing()
+        ctrls[agent] = arg
 
+    # init test args
     args = Arguments(env.get_args(), hyp_test)
     logger = args.init_test()
 
-    test_event_dir = os.path.splitext(args.swmm_input)[0] + '_test.inp'
-
-    test_events = generate_file(args.swmm_input,args.rainfall_parameters,
-                                 filedir=test_event_dir,
-                                 rain_num=args.test_events,
-                                 replace=args.replace_rain)
+    # generate rainfall
+    test_event_dir = os.path.splitext(args.swmm_input)[0] + '_test_gen.inp'
+    rainpara = yaml.load(open(args.rainfall_parameters, "r"), yaml.FullLoader)
+    rainpara['P'] = [1,2,3,5]
+    rainpara['params'].update({'A':25.828,'C':1.3659,'n':0.9126,'b':20.515,'r':0.375})
+    test_events = generate_file(args.swmm_input,
+                                # rainpara,
+                                args.rainfall_parameters,
+                                filedir=test_event_dir,
+                                rain_num=args.test_events,
+                                replace=args.replace_rain)
 
     # test in rainfall events
     for idx,event in enumerate(test_events):
-        rain_name = 'Rain %s'%idx
+        rain_name = 'Rain %s'%(idx+1)
+        P = read_inp_file(event).RAINGAGES['RG']['Timeseries']
         perf = hc_test(env,event)
         print('HC Score at event {0}: {1}'.format(idx,perf))
 
         target = get_flood_cso(event,args.outfall,cumulative=True)
-        operat = get_depth_setting(event,args.storage,env.config['action_space'])
-        logger.log((target,operat),agent='HC',event=rain_name)
+        operat = get_depth_setting(event,args.storage,list(env.config['action_space'].keys()))
+        
+        flooding,cso = eval_control(event)
+        energy = eval_pump(event,list(env.config['action_space'].keys()))
+        perf = {'System flooding':flooding,'CSO':cso,'Pumping energy':energy}
+
+        logger.log((target,operat,perf),name='HC',event=rain_name,P = P)
 
 
-        for agent,ctrl in ctrls.items():
-            perf = interact_steps(env,ctrl,event,train=False)
+        for agent,arg in ctrls.items():
+            perf = interact_steps(env,arg,event,train=False,if_predict=args.if_predict)
             print('{0} Testing Score at event {1}: {2}'.format(agent,idx,perf))
             
             target = get_flood_cso(event,args.outfall,cumulative=True)
-            operat = get_depth_setting(event,args.storage,env.config['action_space'])
-            logger.log((target,operat),agent)
+            operat = get_depth_setting(event,args.storage,list(env.config['action_space'].keys()))
+            
+            flooding,cso = eval_control(event)
+            energy = eval_pump(event,list(env.config['action_space'].keys()))
+            perf = {'System flooding':flooding,'CSO':cso,'Pumping energy':energy}
 
-    logger.save()
+            name = agent + '_predict' if args.if_predict else agent
+            logger.log((target,operat,perf),name)
+
+    logger.save(os.path.join(logger.cwd,'records100.json'))
+    # logger.save()

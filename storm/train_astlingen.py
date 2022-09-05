@@ -78,7 +78,7 @@ if __name__ == '__main__':
     log = args.init_before_training()
 
     memory = RandomMemory(args.max_capacity, args.cwd, args.if_load)
-    ctrl = args.agent_class(args.observ_space,args.action_space,args)
+    ctrl = args.agent_class(args.observ_space,args.action_shape,args)
 
     train_event_dir = os.path.splitext(args.swmm_input)[0] + '_train.inp'
     train_events = generate_split_file(filedir=train_event_dir,rain_num=args.explore_events,args=args)

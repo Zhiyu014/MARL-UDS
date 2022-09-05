@@ -44,39 +44,61 @@ states:
 
 
 # Action space
+# TODO: Use dict
 action_space:
-    - "CC-S1"
-    - "CC-S2"
-    - "CC-R1"
-    - "CC-R2"
-    - "JK-S"
-    - "JK-R1"
-    - "JK-R2"
+  CC-S1:
+    !!python/tuple
+    - 0
+    - 1
+  CC-S2:
+    !!python/tuple
+    - 0
+    - 1
+  CC-R1:
+    !!python/tuple
+    - 0
+    - 1
+  CC-R2:
+    !!python/tuple
+    - 0
+    - 1
+  JK-S:
+    !!python/tuple
+    - 0
+    - 1
+  JK-R1:
+    !!python/tuple
+    - 0
+    - 1
+  JK-R2:
+    !!python/tuple
+    - 0
+    - 1
 
 # Performance Targets
 performance_targets:
-      # flooding
-      - !!python/tuple
-        - "system"
-        - cumflooding
-        - 2
-      # CSOs to river
-      - !!python/tuple
-        - "CC-1"
-        - totalinflow      
-        - 1  
-      - !!python/tuple
-        - "CC-2"
-        - totalinflow      
-        - 1  
-      - !!python/tuple
-        - "JK-1"
-        - totalinflow 
-        - 1
-      - !!python/tuple
-        - "JK-2"
-        - totalinflow 
-        - 1
+  # flooding
+  - !!python/tuple
+    - "system"
+    - cumflooding
+    - 2
+  # CSOs to river
+  - !!python/tuple
+    - "CC-1"
+    - totalinflow      
+    - 1  
+  - !!python/tuple
+    - "CC-2"
+    - totalinflow      
+    - 1  
+  - !!python/tuple
+    - "JK-1"
+    - totalinflow 
+    - 1
+  - !!python/tuple
+    - "JK-2"
+    - totalinflow 
+    - 1
 
 # reward-related variables
 reward:

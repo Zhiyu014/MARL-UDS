@@ -13,8 +13,8 @@ import random
 from os.path import join
 
 class QAgent:
-    def __init__(self,action_size,observ_size,args):
-        self.action_size = action_size
+    def __init__(self,action_shape,observ_size,args):
+        self.action_shape = action_shape
         self.observ_size = observ_size
 
         self.net_dim = getattr(args,"net_dim",128)
@@ -38,11 +38,11 @@ class QAgent:
         for _ in range(self.num_layer-1):
             x = Dense(self.net_dim, activation='relu')(x)
         if self.dueling:
-            x = Dense(self.action_size+1,activation = 'linear')(x)
+            x = Dense(self.action_shape+1,activation = 'linear')(x)
             output = Lambda(lambda i: K.expand_dims(i[:,0],-1)+i[:,1:] - K.mean(i[:,1:],keepdims = True),
-                            output_shape=(self.action_size,))(x)
+                            output_shape=(self.action_shape,))(x)
         else:
-            output = Dense(self.action_size, activation='linear')(x)
+            output = Dense(self.action_shape, activation='linear')(x)
         model = Model(inputs=input_layer, outputs=output)
         return model
 
@@ -57,7 +57,7 @@ class QAgent:
                 a = self.model(x)[0].numpy().tolist()
             else:
                 # Get random action
-                a = [random.random() for _ in range(self.action_size)]
+                a = [random.random() for _ in range(self.action_shape)]
         else:
             a = self.model(x)[0].numpy().tolist()
         return a

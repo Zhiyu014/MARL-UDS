@@ -222,7 +222,7 @@ class astlingen(scenario):
             args['observ_space'] = [[state.index(o) for o in v['states']]
             for v in args['site'].values()]
 
-            args['action_space'] = [len(v['action_space']) for v in args['site'].values()]
+            args['action_shape'] = [len(v['action_space']) for v in args['site'].values()]
 
         else:
             args['n_agents'] = 1
@@ -230,7 +230,7 @@ class astlingen(scenario):
             args['observ_space'] = args['state_shape']  # int value
             
             actions = [len(v) for v in args['action_space'].values()]
-            args['action_space'] = reduce(lambda x,y:x*y,actions)
+            args['action_shape'] = reduce(lambda x,y:x*y,actions)
         args['action_table'] = self.get_action_table(if_mac)
         return args
 

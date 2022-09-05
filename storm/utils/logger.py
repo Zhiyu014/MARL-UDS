@@ -72,12 +72,15 @@ class Trainlogger:
         # for idx in range(vdnn.n_agents):
         #     axP.plot(arange(len(train_loss_history)),[loss[idx] for loss in train_loss_history],label='Agent %s'%idx)
         train_loss = reduce(lambda x,y:x+y, self.train_loss)
-        if agent_wise:
-            for idx in range(len(train_loss[0])):
-                loss = [los[idx] for los in train_loss]
-                axP.plot(np.arange(len(loss)),loss,label='agent%s'%idx)
+        if len(np.array(train_loss).shape) > 1:
+            if agent_wise:
+                for idx in range(len(train_loss[0])):
+                    loss = [los[idx] for los in train_loss]
+                    axP.plot(np.arange(len(loss)),loss,label='agent%s'%idx)
+            else:
+                train_loss = np.array(train_loss).mean(axis=1)
+                axP.plot(np.arange(len(train_loss)),train_loss,label='average loss')
         else:
-            train_loss = np.array(train_loss).mean(axis=1)
             axP.plot(np.arange(len(train_loss)),train_loss,label='average loss')
         axP.set_xlabel('Update times')
         axP.set_title("training loss")
@@ -93,7 +96,7 @@ class Trainlogger:
             axM.plot(np.arange(len(eval_perfs)),eval_perfs,label = 'perf')
         axM.set_xlabel('episode')
         axM.set_title('eval performance')
-        axM.legend(loc='lower right')
+        axM.legend(loc='upper right')
 
 
         if event_wise:
@@ -147,15 +150,20 @@ class Testlogger:
         if load:
             self.load()
 
-    def log(self,data,agent,event=None):
+    def log(self,data,name,event=None,P=None):
         event = self.event if event is None else event
         if event in self.records:
-            self.records[event]['target'][agent] = data[0].to_json()
-            self.records[event]['operation'][agent] = data[1].to_json()
+            self.records[event]['target'][name] = data[0].to_json()
+            self.records[event]['operation'][name] = data[1].to_json()
+            self.records[event]['performance'][name] = data[2]
         elif event is None:
             pass
         else:
-            self.records[event] = {'target':{agent:data[0].to_json()},'operation':{agent:data[1].to_json()}}
+            self.records[event] = {'target':{name:data[0].to_json()},
+            'operation':{name:data[1].to_json()},
+            'performance':{name:data[2]}}
+        if P is not None:
+            self.records[event]['P'] = P
         self.event = event
 
     def save(self,model_dir=None):

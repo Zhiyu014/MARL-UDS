@@ -1,6 +1,6 @@
 from math import log10
 from numpy import diff, array
-from os.path import exists,splitext
+from os.path import exists,splitext,isfile
 import random
 from datetime import datetime,timedelta
 from swmm_api import read_inp_file,read_rpt_file,swmm5_run,read_out_file
@@ -16,11 +16,11 @@ def Chicago_Hyetographs(para_tuple):
     ts = []
     for i in range(dura//delta):
         t = i*delta
-        key = str(1+t//60).zfill(2)+':'+str(t % 60).zfill(2)
+        # key = str(1+t//60).zfill(2)+':'+str(t % 60).zfill(2)
         if t <= r*dura:
-            ts.append([key, (a*((1-n)*(r*dura-t)/r+b)/((r*dura-t)/r+b)**(1+n))*60])
+            ts.append([t, (a*((1-n)*(r*dura-t)/r+b)/((r*dura-t)/r+b)**(1+n))*60])
         else:
-            ts.append([key, (a*((1-n)*(t-r*dura)/(1-r)+b)/((t-r*dura)/(1-r)+b)**(1+n))*60])
+            ts.append([t, (a*((1-n)*(t-r*dura)/(1-r)+b)/((t-r*dura)/(1-r)+b)**(1+n))*60])
     # tsd = TimeseriesData(Name = name,data = ts)
     return ts
 
@@ -41,8 +41,8 @@ def Chicago_icm(para_tuple):
     ts = []
     for i in range(dura//delta):
         t = i*delta
-        key = str(1+t//60).zfill(2)+':'+str(t % 60).zfill(2)
-        ts.append([key,tsd[i]])
+        # key = str(1+t//60).zfill(2)+':'+str(t % 60).zfill(2)
+        ts.append([t,tsd[i]])
     return ts
 
 
@@ -71,7 +71,7 @@ def generate_file(base_inp_file, para_file, pattern = 'Chicago_icm', filedir = N
 
     """
     inp = read_inp_file(base_inp_file)
-    paras = yaml.load(open(para_file, "r"), yaml.FullLoader)
+    paras = yaml.load(open(para_file, "r"), yaml.FullLoader) if type(para_file) is str else para_file
     files = list()
     filedir = splitext(base_inp_file)[0] if filedir is None else filedir
     filedir = splitext(filedir)[0]+'_%s.inp'
@@ -80,18 +80,27 @@ def generate_file(base_inp_file, para_file, pattern = 'Chicago_icm', filedir = N
         files.append(file)
         if exists(file) == True and replace == False:
             continue        
-        p = random.randint(*paras['P'])
+
+        if type(paras['P']) is tuple:
+            p = random.randint(*paras['P'])
+        elif type(paras['P']) is list:
+            p = paras['P'][i]
+        elif type(paras['P']) in [int,float]:
+            p = paras['P']
+
         delta = paras['delta']
         dura = paras['dura']
         simu_dura = paras['simu_dura']
-        para = [random.uniform(*v)
-                for k,v in paras['params'].items()] + [p,delta,dura]
-        ts = eval(pattern)(para)
+        para = []
+        for col in ['A','C','n','b','r']:
+            v = paras['params'][col]
+            if type(v) is tuple:
+                para.append(random.uniform(*v))
+            elif type(v) in [int,float]:
+                para.append(v)
+        para += [p,delta,dura]
 
-        inp['TIMESERIES'] = Timeseries.create_section()
-        inp['TIMESERIES'].add_obj(TimeseriesData(Name = str(p)+'y',data = ts))
-        inp.RAINGAGES['RG']['Timeseries'] = str(p)+'y'
-        inp.RAINGAGES['RG']['Interval'] = str(int(delta//60)).zfill(2)+':'+str(int(delta%60)).zfill(2)
+        # define simulation time on 01/01/2000
         start_time = datetime(2000,1,1,0,0)
         end_time = start_time + timedelta(minutes = simu_dura)
         inp.OPTIONS['START_DATE'] = start_time.date()
@@ -100,6 +109,15 @@ def generate_file(base_inp_file, para_file, pattern = 'Chicago_icm', filedir = N
         inp.OPTIONS['END_TIME'] = end_time.time()
         inp.OPTIONS['REPORT_START_DATE'] = start_time.date()
         inp.OPTIONS['REPORT_START_TIME'] = start_time.time()
+
+        # calculate rainfall timeseries
+        ts = eval(pattern)(para)
+        ts = [[(start_time+timedelta(hours=1)+timedelta(minutes=t)).strftime('%m/%d/%Y %H:%M:%S'),va] for t,va in ts]
+        inp['TIMESERIES'] = Timeseries.create_section()
+        inp['TIMESERIES'].add_obj(TimeseriesData(Name = str(p)+'y',data = ts))
+        inp.RAINGAGES['RG']['Timeseries'] = str(p)+'y'
+        inp.RAINGAGES['RG']['Interval'] = str(int(delta//60)).zfill(2)+':'+str(int(delta%60)).zfill(2)
+
         inp.write_file(file)
     return files
 
@@ -257,8 +275,16 @@ def eval_control(event):
     rpt = read_rpt_file(event)
     flooding = rpt.flow_routing_continuity['Flooding Loss']['Volume_10^6 ltr']
     outload = rpt.outfall_loading_summary['Total_Volume_10^6 ltr']
-    cso = outload.sum() - outload.loc['WSC','Total_Volume_10^6 ltr']
+    # WSC in the chaohu model
+    cso = outload.sum() - outload['WSC']
     return flooding,cso
+
+def eval_pump(event,pumps):
+    if event.endswith('.inp'):
+        event = event.replace('.inp','.rpt')
+    rpt = read_rpt_file(event)
+    energy = rpt.pumping_summary.loc[pumps,'Power_Usage_Kw-hr'].sum()
+    return energy
 
 def get_flood_cso(event,outfalls=None,cumulative=False):
     rpt_step = read_inp_file(event).OPTIONS['REPORT_STEP']
@@ -332,7 +358,7 @@ def eval_closing_reward(event):
 
 
 # For model predictive control
-
+# TODO: options dict/list
 def update_controls(eval_inp_file,options,j,ctrls):
     inp = read_inp_file(eval_inp_file)
     # Use control rules
@@ -340,6 +366,7 @@ def update_controls(eval_inp_file,options,j,ctrls):
         acts = inp['CONTROLS'][k].actions
         for i,act in enumerate(acts):
             act.value = str(options[act.label][ctrls[idx][i]])
+            # act.value = setting[i]
         inp['CONTROLS'][k].actions = acts
     eval_inp_file = eval_inp_file.strip('.inp')+'_%s.inp'%j
     inp.write_file(eval_inp_file)
@@ -367,9 +394,12 @@ def eval_cost(rpt_file,target):
         #     target = series.min()     
         # else:
         #     target = series[k[2]]
-        if ID not in series.index:
+        if ID == 'system':
+            target = series.sum()
+        elif ID not in series.index:
             continue
-        target = series[ID]
+        else:
+            target = series[ID]
         cost.append(target*weight)
     return cost
 

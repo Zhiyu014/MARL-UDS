@@ -259,7 +259,7 @@ class chaohu(scenario):
     def get_args(self,if_mac = True):
         # Set the environment arguments
         config = self.config
-        args = {}
+        args = config.copy()
         args['env_name'] = config['env_name']
         args['swmm_input'] = config["swmm_input"]
         # Designed rainfall params
@@ -270,6 +270,7 @@ class chaohu(scenario):
 
         args['storage'] = ['CC-storage','JK-storage']
         args['outfall'] = [item[0] for item in config['performance_targets'] if item[1] == 'totalinflow']
+
         if if_mac:
             # multi-agent controller structure
             args['n_agents'] = len(config['site'])
@@ -282,7 +283,7 @@ class chaohu(scenario):
             # Calculate the action nums for each site
             actions = [[len(a)+1 for a in v['action_space']]
                         for v in config['site'].values()]
-            args['action_space'] = [reduce(lambda x,y:x*y,action)
+            args['action_shape'] = [reduce(lambda x,y:x*y,action)
                                      for action in actions]
         else:
             # single-agent
@@ -295,13 +296,11 @@ class chaohu(scenario):
                          for v in config['site'].values()]
             actions = [reduce(lambda x,y:x*y,action)
                          for action in actions]
-            args['action_space'] = reduce(lambda x,y:x*y,actions)
+            args['action_shape'] = reduce(lambda x,y:x*y,actions)
         args['action_table'] = self.get_action_table(if_mac)
         return args
 
 
-    # TODO:predictive functions
-    # need to update environment methods
     def save_hotstart(self,hsf_file=None):
         # Save the current state in a .hsf file.
         if hsf_file is None:
@@ -320,8 +319,9 @@ class chaohu(scenario):
         # Set the simulation time & hsf options
         inp['OPTIONS']['START_DATE'] = inp['OPTIONS']['REPORT_START_DATE'] = ct.date()
         inp['OPTIONS']['START_TIME'] = inp['OPTIONS']['REPORT_START_TIME'] = ct.time()
-        inp['OPTIONS']['END_DATE'] = (ct + datetime.timedelta(minutes=self.config['eval_horizon'])).date()
-        inp['OPTIONS']['END_TIME'] = (ct + datetime.timedelta(minutes=self.config['eval_horizon'])).time()
+        end = ct + datetime.timedelta(minutes=self.config['eval_horizon'])
+        inp['OPTIONS']['END_DATE'] = end.date()
+        inp['OPTIONS']['END_TIME'] = end.time()
         
         if hsf_file is not None:
             if 'FILES' not in inp:

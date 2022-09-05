@@ -27,9 +27,9 @@ def interact_steps(env,f,event=None,train=True,base=None):
         done = env.step(setting,env.config['control_interval']*60)
         state = env.state()
         # Use designed reward function
-        # reward = env.reward(done,base)
+        reward = env.reward(done,base)
         # Use the basic reward function (related to CSO & flooding)
-        reward = -0.001 * env.performance()
+        # reward = -0.001 * env.performance()
         rewards += reward
         traj += [action,reward,state,done]
         trajs.append(traj)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     log = args.init_before_training()
 
     memory = RandomMemory(args.max_capacity, args.cwd, args.if_load)
-    ctrl = args.agent_class(args.observ_space,args.action_space,args)
+    ctrl = args.agent_class(args.observ_space,args.action_shape,args)
 
     train_event_dir = os.path.splitext(args.swmm_input)[0] + '_train.inp'
     train_events = generate_file(args.swmm_input,args.rainfall_parameters,
@@ -107,9 +107,9 @@ if __name__ == '__main__':
             print('Upgrade Complete: %s'%n)
             update = log.log((rewards,perfs,losses),train=True)
             if update[0]:
-                ctrl.save(os.path.join(ctrl.model_dir,'train'))
+                ctrl.save(os.path.join(ctrl.model_dir,'train'),norm=False)
             if update[1]:
-                ctrl.save(os.path.join(ctrl.model_dir,'reward'))
+                ctrl.save(os.path.join(ctrl.model_dir,'reward'),norm=False)
 
         # Evaluate the model in several episodes
         if n % args.eval_gap == 0 and n > args.pre_episodes:
@@ -124,7 +124,7 @@ if __name__ == '__main__':
                 print('HC Score: %s'%hc_evals[idx])
             update = log.log((perfs,losses),train=False)
             if update:
-                ctrl.save(os.path.join(ctrl.model_dir,'eval'))
+                ctrl.save(os.path.join(ctrl.model_dir,'eval'),norm=False)
 
         # Save the current model
         if n % args.save_gap == 0 and n > args.pre_episodes:

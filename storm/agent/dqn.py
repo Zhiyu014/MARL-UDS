@@ -15,10 +15,10 @@ from os.path import join
 class DQN:
     def __init__(self,
             state_shape: int,
-            action_space: int,
+            action_shape: int,
             args = None):
 
-
+        self.double = getattr(args,"if_double",True)
         self.recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 2)
         self.gamma = getattr(args, "gamma", 0.98)
@@ -31,11 +31,11 @@ class DQN:
 
         if self.recurrent:
             self.seq_len = getattr(args,"seq_len",3)
-            self.agent = QRAgent(action_space,state_shape,self.seq_len,args) 
+            self.agent = QRAgent(action_shape,state_shape,self.seq_len,args) 
         else:
-            self.agent = QAgent(action_space,state_shape,args)
+            self.agent = QAgent(action_shape,state_shape,args)
         self.state_shape = state_shape
-        self.action_space = action_space
+        self.action_shape = action_shape
         self.episode = 0
         self.action_table = getattr(args,'action_table')
 
@@ -118,13 +118,11 @@ class DQN:
         
         s,r,s_,d = [convert_to_tensor(i,dtype=float32) for i in [s,r,s_,d]]
         a = convert_to_tensor(a)
-
-        target_q_values = reduce_max(self.agent.target_model(s_),axis=1) 
-        discounted_reward_batch = self.gamma * target_q_values
-        targets = r + discounted_reward_batch * (1-d)
+        
+        targets = self._calculate_target(r,s_,d)
         
         loss = self._train_on_batch(s,a,targets)
-        
+
         if self.update_interval > 1:
             self._hard_update_target_model()
         else:
@@ -138,23 +136,31 @@ class DQN:
         with GradientTape() as tape:
             tape.watch(s)
             y_preds = self.agent.model(s)
-            y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_space),axis=1)
+            y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_shape),axis=1)
             loss_value = self.loss_fn(targets, y_preds)
         grads = tape.gradient(loss_value, self.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
         return loss_value.numpy()
+
+    def _calculate_target(self,r,s_,d):
+        if self.double:
+            argmax_actions = ks.backend.argmax(self.agent.model(s_))
+            target_q_values = reduce_sum(self.agent.target_model(s_)*one_hot(argmax_actions,self.action_shape),axis=1)
+        else:
+            target_q_values = reduce_max(self.agent.target_model(s_),axis=1) 
+        discounted_reward_batch = self.gamma * target_q_values
+        targets = r + discounted_reward_batch * (1-d)
+        return targets
 
     def _test_loss(self, s, a, r, s_, d):
 
         s,r,s_,d = [convert_to_tensor(i,dtype=float32) for i in [s,r,s_,d]]
         a = convert_to_tensor(a)
 
-        target_q_values = reduce_max(self.agent.target_model(s_),axis=1) 
-        discounted_reward_batch = self.gamma * target_q_values
-        targets = r + discounted_reward_batch * (1-d)
+        targets = self._calculate_target(r,s_,d)
         
         y_preds = self.agent.model(s)
-        y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_space),axis=1)
+        y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_shape),axis=1)
         loss_value = self.loss_fn(targets, y_preds) 
         return loss_value.numpy()
 

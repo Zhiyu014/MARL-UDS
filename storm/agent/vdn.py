@@ -15,10 +15,10 @@ from os.path import join
 class VDN:
     def __init__(self,
             observ_space: list,
-            action_space: list,
+            action_shape: list,
             args = None):
 
-
+        self.double = getattr(args,"if_double",True)
         self.recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 2)
         self.gamma = getattr(args, "gamma", 0.98)
@@ -31,13 +31,13 @@ class VDN:
 
         if self.recurrent:
             self.seq_len = getattr(args,"seq_len",3)
-            self.agents = [QRAgent(action_space[i],len(observ_space[i]),self.seq_len,args) 
+            self.agents = [QRAgent(action_shape[i],len(observ_space[i]),self.seq_len,args) 
                            for i in range(self.n_agents)]       
         else:
-            self.agents = [QAgent(action_space[i],len(observ_space[i]),args)
+            self.agents = [QAgent(action_shape[i],len(observ_space[i]),args)
                            for i in range(self.n_agents)]
         self.observ_space = observ_space
-        self.action_space = action_space
+        self.action_shape = action_shape
         self.episode = 0
         self.action_table = getattr(args,'action_table')
 
@@ -144,7 +144,7 @@ class VDN:
         
         with GradientTape() as tape:
             tape.watch(o)
-            q_values = [reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_space[idx]),axis=1)
+            q_values = [reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                     for idx,agent in enumerate(self.agents)]
             q_tot = reduce_sum(convert_to_tensor(q_values),axis=0)
             loss_value = self.loss_fn(targets, q_tot)
@@ -160,7 +160,7 @@ class VDN:
         
         targets = self._calculate_target(r,o_,d)
         
-        q_values = [reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_space[idx]),axis=1)
+        q_values = [reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                     for idx,agent in enumerate(self.agents)]
         q_tot = reduce_sum(convert_to_tensor(q_values),axis=0)
         
@@ -170,7 +170,12 @@ class VDN:
     
     def _calculate_target(self,r,o_,d):
 
-        target_q_values = [reduce_max(agent.target_model(o_[idx]),axis=1)
+        if self.double:
+            target_q_values = [reduce_sum(agent.target_model(o_[idx])*\
+                one_hot(ks.backend.argmax(agent.model(o_[idx])),self.action_shape[idx]),axis=1)
+            for idx,agent in enumerate(self.agents)]
+        else:
+            target_q_values = [reduce_max(agent.target_model(o_[idx]),axis=1)
                     for idx,agent in enumerate(self.agents)]
         target_q_tot = reduce_sum(convert_to_tensor(target_q_values),axis=0)
 

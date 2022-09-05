@@ -45,8 +45,10 @@ class env_chaohu(env_base):
                              'pumpenergy':self._getPumpEnergy,
                              'getnodefulldepth':self._getNodeFullDepth,
                              'getnodeinitdepth':self._getNodeInitDepth,
-                             'setting':self._getLinkSetting})
+                             'setting':self._getLinkSetting,
+                             'getlinktype':self._getLinkType})
 
+    # ------ Get necessary Parameters  ----------------------------------------------
     def _getNodeTotalInflow(self,ID):
         # Cumulative inflow volume
         return self.sim._model.node_inflow(ID)
@@ -71,3 +73,7 @@ class env_chaohu(env_base):
 
     def _getPumpEnergy(self, ID):
         return self.sim._model.pump_statistics(ID)['energy_consumed']    
+
+    def _getLinkType(self,ID):
+        # For control formulation
+        return self.sim._model.getLinkType(ID).name
