@@ -9,12 +9,12 @@ from envs.utilities import generate_file,eval_control
 from utils.memory import RandomMemory
 # from rnmemory import Recurrent_RandomMemory
 import yaml
+from functools import reduce
 import os
 import multiprocessing as mp
 # import multiprocess as mp
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from utils.config import Arguments
-from functools import reduce
 # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
@@ -42,14 +42,14 @@ def interact_steps(env,arg,event=None,train=True,base=None):
         traj += [action,reward,state,done]
         trajs.append(traj)
     perf = env.performance('cumulative')
-    
+
     if train:
         print('Training Reward at event {0}: {1}'.format(os.path.basename(event),reward))
         print('Training Score at event {0}: {1}'.format(os.path.basename(event),perf))
-        print('HC Score: %s'%base)
     else:
-        print('Evaluation Score at event {0}: {1}'.format(os.path.basename(event),perf))
-        print('HC Score: %s'%base)
+        print('Eval Score at event {0}: {1}'.format(os.path.basename(event),perf))
+    print('HC Score: %s'%base)
+
     return trajs,rewards,perf
 
 def hc_test(env,event=None):
@@ -70,6 +70,31 @@ def hc_test(env,event=None):
     perf = env.performance('cumulative')
     return perf
 
+
+def update_agent(args,memory,log,res):
+    ctrl = args.agent_class(args.observ_space,args.action_shape,args)
+    losses = ctrl.update_net(memory)
+
+    rewards,perfs = [[r[i] for r in res] for i in range(1,3)]
+    update = log.log((rewards,perfs,losses),train=True)
+    if update[0]:
+        ctrl.save(os.path.join(ctrl.model_dir,'train'))
+    if update[1]:
+        ctrl.save(os.path.join(ctrl.model_dir,'reward'))
+    # load & save in each episode after pre_episodes
+    ctrl.save()
+    return log
+
+def evaluate_agent(args,log,res):
+    ctrl = args.agent_class(args.observ_space,args.action_shape,args)
+    perfs = [r[-1] for r in res]
+    losses = [ctrl.evaluate_net(r[0]) for r in res]
+    update = log.log((perfs,losses),train=False)
+    if update:
+        ctrl.save(os.path.join(ctrl.model_dir,'eval'))
+    return log
+
+
 if __name__ == '__main__':
     # init SWMM environment and arguments
     env = chaohu(initialize=False)
@@ -83,7 +108,9 @@ if __name__ == '__main__':
     log = args.init_before_training()
 
     memory = RandomMemory(args.max_capacity, args.cwd, args.if_load)
-    ctrl = args.agent_class(args.observ_space,args.action_shape,args)
+    if args.processes <= 1:
+        # cannot be initialized before pool
+        ctrl = args.agent_class(args.observ_space,args.action_shape,args)
 
     train_event_dir = os.path.splitext(args.swmm_input)[0] + '_train.inp'
     train_events = generate_file(args.swmm_input,args.rainfall_parameters,
@@ -99,20 +126,19 @@ if __name__ == '__main__':
 
     # HC tests
     if args.processes > 1:
-       pool = mp.Pool(args.processes)
-       res = [pool.apply_async(func=hc_test,args=(env,event,)) for event in train_events+eval_events]
-       pool.close()
-       pool.join()
-       hc_trains = [r.get() for r in res[:len(train_events)]]
-       hc_evals = [r.get() for r in res[len(train_events):]]
+        pool = mp.Pool(args.processes)
+        res = [pool.apply_async(func=hc_test,args=(env,event,)) for event in train_events+eval_events]
+        pool.close()
+        pool.join()
+        hc_trains = [r.get() for r in res[:len(train_events)]]
+        hc_evals = [r.get() for r in res[len(train_events):]]
     else:
-       hc_trains = [hc_test(env,event) for event in train_events]
-       hc_evals = [hc_test(env,event) for event in eval_events]
+        hc_trains = [hc_test(env,event) for event in train_events]
+        hc_evals = [hc_test(env,event) for event in eval_events]
 
-    #print('HC tests complete')
+    # begin training
     # ini_n = getattr(args,'ini_episodes',0)
     # for n in range(ini_n, args.total_episodes + args.pre_episodes):
-
     while args.episode <= args.total_episodes + args.pre_episodes:
         # Sampling TODO: Parallel Problems in Linux
         # pool must be initialzed before retrieving data
@@ -128,41 +154,64 @@ if __name__ == '__main__':
         else:
             res = [interact_steps(env,ctrl,event,base=hc_trains[idx])
              for idx,event in enumerate(train_events)]
-        trajs,rewards,perfs = [[r[i] for r in res] for i in range(3)]
         trajs = reduce(lambda x,y:x+y, trajs)
         memory.update(trajs)
         print('Sampling Complete: %s'%args.episode)
-        
+
         if args.episode < args.pre_episodes:
-            ctrl.episode_update(*args.episode_update())
+            if args.processes <= 1:
+                ctrl.episode_update(*args.episode_update())
+            else:
+                _,_ = args.episode_update()
             continue
 
         # Training
         print('Upgrading')
-        losses = ctrl.update_net(memory)
-        print('Upgrade Complete: %s'%args.episode)
-        update = log.log((rewards,perfs,losses),train=True)
-        if update[0]:
-            ctrl.save(os.path.join(ctrl.model_dir,'train'))
-        if update[1]:
-            ctrl.save(os.path.join(ctrl.model_dir,'reward'))
-        # load & save in each episode after pre_episodes
         if args.processes > 1:
+            # memory,log = update_agent(args,memory,log,res)
+            pool = mp.Pool(1)
+            r = pool.apply_async(func=update_agent,args=(args,memory,log,res,))
+            pool.close()
+            pool.join()
+            log = r.get()
             args.if_load = True
-            ctrl.save()
+        else:
+            losses = ctrl.update_net(memory)
+            rewards,perfs = [r[1] for r in res],[r[-1] for r in res]
+            update = log.log((rewards,perfs,losses),train=True)
+            if update[0]:
+                ctrl.save(os.path.join(ctrl.model_dir,'train'))
+            if update[1]:
+                ctrl.save(os.path.join(ctrl.model_dir,'reward'))
+            # load & save in each episode after pre_episodes
+        print('Upgrade Complete: %s'%args.episode)
 
         # Evaluate the model in several episodes
         if args.episode % args.eval_gap == 0:
-            perfs = []
-            losses = []
-            for idx,event in enumerate(eval_events):
-                trajs,_,perf = interact_steps(env,ctrl,event,train=False,base=hc_evals[idx])
-                loss = ctrl.evaluate_net(trajs)
-                perfs.append(perf)
-                losses.append(loss)
-            update = log.log((perfs,losses),train=False)
-            if update:
-                ctrl.save(os.path.join(ctrl.model_dir,'eval'))
+            if args.processes > 1:
+                pool = mp.Pool(args.processes)
+                res = []
+                for idx,event in enumerate(eval_events):
+                    r = pool.apply_async(func=interact_steps,args=(env,args,event,False,hc_evals[idx],))
+                    res.append(r)
+                pool.close()
+                pool.join()
+                res = [r.get() for r in res]
+
+                # log = evaluate_agent(args,log,res)
+                pool = mp.Pool(1)
+                r = pool.apply_async(func=evaluate_agent,args=(args,log,res,))
+                pool.close()
+                pool.join()
+                log = r.get()
+            else:
+                res = [interact_steps(env,ctrl,event,train=False,base=hc_evals[idx])
+                for idx,event in enumerate(train_events)]
+                perfs = [r[-1] for r in res]
+                losses = [ctrl.evaluate_net(r[0]) for r in res]
+                update = log.log((perfs,losses),train=False)
+                if update:
+                    ctrl.save(os.path.join(ctrl.model_dir,'eval'))
 
         # Save the current model
         if args.episode % args.save_gap == 0:
@@ -172,7 +221,10 @@ if __name__ == '__main__':
             log.plot()
 
         # Update the episode and exploration greedy
-        ctrl.episode_update(*args.episode_update())
+        if args.processes <= 1:
+            ctrl.episode_update(*args.episode_update())
+        else:
+            _,_ = args.episode_update()
 
     ctrl.save()
     memory.save()

@@ -81,7 +81,7 @@ performance_targets:
   - !!python/tuple
     - "system"
     - cumflooding
-    - 2
+    - 1
   # CSOs to river
   - !!python/tuple
     - "CC-1"

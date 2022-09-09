@@ -1,6 +1,6 @@
 # Environment name
 chaohu:
-  train: DQN
+  train: VDN
   # strategies
   VDN:
     # Arguments for the agent structure
@@ -34,11 +34,14 @@ chaohu:
     # Arguments for the evaluation
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
+    
+    # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/chaohu_VDN/reward2/eval # the working directory
+    cwd: ./model/chaohu_VDN/reward2_2 # the working directory
     if_remove: True # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
+    processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
 
   DQN:
     # Arguments for the agent structure
@@ -72,11 +75,15 @@ chaohu:
     # Arguments for the evaluation
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
+
+    
+    # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
     cwd: ./model/chaohu_DQN/reward # the working directory
     if_remove: True # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
+    processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
 
   IQL:
     # Arguments for the agent structure
@@ -115,6 +122,7 @@ chaohu:
     if_remove: True # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
+    processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
 
   test:
     # Arguments for online search in the testing

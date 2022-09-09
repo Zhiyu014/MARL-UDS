@@ -11,56 +11,64 @@ from .qagent import QAgent
 from .qragent import QRAgent
 from numpy import argmax,array,save,load
 from os.path import join
+import random
 
 class IQL:
     def __init__(self,
             observ_space: list,
             action_shape: list,
-            args = None):
+            args = None,
+            act_only = False):
 
-        self.double = getattr(args,"if_double",True)
+        self.name = "IQL"
+        self.model_dir = args.cwd
+
         self.recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 2)
-        self.gamma = getattr(args, "gamma", 0.98)
-        self.batch_size = getattr(args,"batch_size",256)
-        self.learning_rate = getattr(args,"learning_rate",1e-5)
-        self.repeat_times = getattr(args,"repeat_times",2)
-        self.update_interval = getattr(args,"update_interval",0.005)
-        self.target_update_func = self._hard_update_target_model if self.update_interval >1\
-             else self._soft_update_target_model
 
         if self.recurrent:
             self.seq_len = getattr(args,"seq_len",3)
             self.agents = [QRAgent(action_shape[i],len(observ_space[i]),self.seq_len,args) 
-                           for i in range(self.n_agents)]       
+                        for i in range(self.n_agents)]       
         else:
             self.agents = [QAgent(action_shape[i],len(observ_space[i]),args)
-                           for i in range(self.n_agents)]
+                        for i in range(self.n_agents)]
         self.observ_space = observ_space
         self.action_shape = action_shape
-        self.episode = 0
         self.action_table = getattr(args,'action_table')
-
         self.state_norm = array([[i for _ in range(args.state_shape)] for i in range(2)])
-        # self.reward_norm = (0,1)
+        self.epsilon = getattr(args,'epsilon',1)
 
-        self.trainable_variables = []
-        self.target_trainable_variables = []
-        for agent in self.agents:
-            self.trainable_variables += agent.model.trainable_variables
-            self.target_trainable_variables += agent.target_model.trainable_variables
+        if not act_only:
+            self.double = getattr(args,"if_double",True)
+            self.gamma = getattr(args, "gamma", 0.98)
+            self.batch_size = getattr(args,"batch_size",256)
+            self.learning_rate = getattr(args,"learning_rate",1e-5)
+            self.repeat_times = getattr(args,"repeat_times",2)
+            self.update_interval = getattr(args,"update_interval",0.005)
+            self.target_update_func = self._hard_update_target_model if self.update_interval >1\
+                else self._soft_update_target_model
 
-        self.loss_fn = ks.losses.get(args.loss_function)
-        self.optimizer = ks.optimizers.get(args.optimizer)
-        self.optimizer.learning_rate = self.learning_rate
+            self.episode = getattr(args,'episode',0)
+            # self.reward_norm = (0,1)
 
-        self.name = getattr(args,"agent_class","IQL")
-        self.model_dir = args.cwd
+            self.trainable_variables = []
+            self.target_trainable_variables = []
+            for agent in self.agents:
+                self.trainable_variables += agent.model.trainable_variables
+                self.target_trainable_variables += agent.target_model.trainable_variables
+
+            self.loss_fn = ks.losses.get(args.loss_function)
+            self.optimizer = ks.optimizers.get(args.optimizer)
+            self.optimizer.learning_rate = self.learning_rate
+
+
 
         if args.if_load:
             self.load()
+            print("Load network: "+args.cwd)
 
-    def act(self,state,train):
+    def act(self,state,train=True):
         action = []
         for i,agent in enumerate(self.agents):
             if self.recurrent:
@@ -73,7 +81,13 @@ class IQL:
                 # Normalize the state
                 state = self._normalize_state(state)
                 o = [state[idx] for idx in self.observ_space[i]]
-            a = agent.act(o,train)
+
+            if train and random.random() < self.epsilon:
+                # Get random action
+                a = [random.random() for _ in range(self.action_shape)]
+            else:
+                # Get action from Q table
+                a = agent.act(o)
             act = argmax(a)
             action.append(act)
         return action
@@ -97,8 +111,8 @@ class IQL:
             loss = self._experience_replay(o, a, r, o_, d)
             self.target_update_func()
             losses.append(loss)
-        # Decay the exploration epsilon
-        self._epsilon_update()
+        # deprecated: Decay the exploration epsilon
+        # self._epsilon_update()
         return losses
 
     def evaluate_net(self,trajs):
@@ -175,22 +189,23 @@ class IQL:
             loss.append(los.numpy())   
         return loss
 
-
+    # deprecated
     def _epsilon_update(self):
         for agent in self.agents:
             agent._epsilon_update()
             
+    def episode_update(self,episode,epsilon):
+        self.episode = episode
+        self.epsilon = epsilon
 
     def _hard_update_target_model(self):
         if self.episode%self.update_interval == 0:
             for agent in self.agents:
                 agent._hard_update_target_model()
-        self.episode += 1
 
     def _soft_update_target_model(self):
         for agent in self.agents:
             agent._soft_update_target_model(self.update_interval)
-        self.episode += 1
 
 
     def save(self,model_dir=None,norm=True,agents=True):

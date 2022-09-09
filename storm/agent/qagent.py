@@ -9,7 +9,6 @@ from tensorflow.keras.layers import Dense,BatchNormalization,Input,Lambda,GRU
 from tensorflow.keras.models import Model
 from tensorflow import convert_to_tensor,expand_dims
 from numpy import array
-import random
 from os.path import join
 
 class QAgent:
@@ -21,6 +20,7 @@ class QAgent:
         self.num_layer = getattr(args, "num_layer", 3)
         self.dueling = getattr(args,"if_dueling",True)
 
+        # deprecated
         self.epsilon = getattr(args, "epsilon", 1)
         self.epsilon_decay = getattr(args, "epsilon_decay", 0.999)
         self.epsilon_min = getattr(args, "epsilon_min", 0.1)
@@ -48,18 +48,10 @@ class QAgent:
 
         
         
-    def act(self,observ,train=True):
+    def act(self,observ):
         x = convert_to_tensor(observ)
         x = expand_dims(x,0)
-        if train:
-            if random.random() > self.epsilon:
-                # Get action from Q table
-                a = self.model(x)[0].numpy().tolist()
-            else:
-                # Get random action
-                a = [random.random() for _ in range(self.action_shape)]
-        else:
-            a = self.model(x)[0].numpy().tolist()
+        a = self.model(x)[0].numpy().tolist()
         return a
     
     def _hard_update_target_model(self):
@@ -73,6 +65,7 @@ class QAgent:
             + tau * model_weights
         self.target_model.set_weights(new_weight)
     
+    # deprecated
     def _epsilon_update(self):
         self.epsilon = max(self.epsilon*self.epsilon_decay,self.epsilon_min)
         

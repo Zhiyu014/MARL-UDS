@@ -9,7 +9,7 @@ dura: 120
 # Time resolution (min)
 delta: 5
 # Simulation duration (min)
-simu_dura: 360
+simu_dura: 300
 # Set rainfall parameters
 P:
   !!python/tuple

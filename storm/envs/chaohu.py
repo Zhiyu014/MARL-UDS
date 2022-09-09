@@ -49,7 +49,7 @@ class chaohu(scenario):
 
     """
     
-    def __init__(self, config_file = None, swmm_file = None):
+    def __init__(self, config_file = None, swmm_file = None, initialize = True):
         # Network configuration
         config_file = os.path.join(HERE,"config","chaohu.yaml") \
             if config_file is None else config_file
@@ -58,15 +58,15 @@ class chaohu(scenario):
             if swmm_file is None else swmm_file
         
         # Create the environment based on the physical parameters
-        self.env = env_chaohu(self.config, ctrl=True)
-        
+        if initialize:
+            self.env = env_chaohu(self.config, ctrl=True)
+            self.node_properties = {ID: {'initDepth':self.env.methods['getnodeinitdepth'](ID),
+            'fullDepth':self.env.methods['getnodefulldepth'](ID)}
+            for ID, attribute in self.config["states"] if attribute in ['depthN']}
+
         self.penalty_weight = {ID: weight
                                for ID, _, weight in \
                                    self.config["performance_targets"]}
-
-        self.node_properties = {ID: {'initDepth':self.env.methods['getnodeinitdepth'](ID),
-        'fullDepth':self.env.methods['getnodefulldepth'](ID)}
-        for ID, attribute in self.config["states"] if attribute in ['depthN']}
 
         # initialize logger
         self.initialize_logger()
@@ -141,7 +141,7 @@ class chaohu(scenario):
             1) If raining:  sum[(depth - ini_depth)/ini_depth] - sum[energy] * 0.2
             2) Not raining: sum[(ini_depth - depth)/ini_depth] - sum[energy] * 0.2
             3) If flooding in storage: -5
-        2. Closing reward:  ±5 (gamma=0.95 n_steps=36 reward=2/(0.95**36)=4.16 --> 5)
+        2. Closing reward:  ±10 (gamma=0.95 n_steps=30 reward=2/(0.95**30)=9.32 --> 10)
             1) - 8 * (sum[flooding] + sum[overflow])/(sum[outflow] + sum[flooding] + final_storage) + 5
                 cannot reach ±5 at all times so multiply -20 plus 15
             OR 2) 10 * (HC[fl&CSO] - fl&CSO)/HC[fl&SCO]
@@ -178,23 +178,26 @@ class chaohu(scenario):
 
         if done and baseline is not None:
             total_flood_cso = self.performance('cumulative')
-            # value += 10 * (1 - total_flood_cso/baseline)
-            if total_flood_cso > baseline:
-                value += -10 - 10 * (total_flood_cso/baseline - 1)
-            else:
-                value += 10 + 10 * (1 - total_flood_cso/baseline)
+            value += 20 * (1 - total_flood_cso/baseline)
+            # if total_flood_cso > baseline:
+            #     value += -10 - 10 * (total_flood_cso/baseline - 1)
+            # else:
+            #     value += 10 + 10 * (1 - total_flood_cso/baseline)
         return value
 
     def reset(self,swmm_file=None):
         # clear the data log and reset the environment
-        if swmm_file is None:
-            _ = self.env.reset()
-            state = self.state()
-        else:
-            # change the swmm inp file
+        if swmm_file is not None:
             self.config["swmm_input"] = swmm_file
+        if not hasattr(self,'env') or swmm_file is not None:
             self.env = env_chaohu(self.config, ctrl=True)
-            state = self.state()
+            self.node_properties = {ID: {'initDepth':self.env.methods['getnodeinitdepth'](ID),
+            'fullDepth':self.env.methods['getnodefulldepth'](ID)}
+            for ID, attribute in self.config["states"] if attribute in ['depthN']}
+        else:
+            _ = self.env.reset()
+
+        state = self.state()
         self.initialize_logger()
         return state
 

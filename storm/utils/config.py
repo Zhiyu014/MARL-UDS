@@ -52,12 +52,14 @@ class Arguments:
         '''Arguments for evaluate'''
         self.eval_events = 1
         self.eval_gap = 10  # evaluate the agent after the gap
+
+        '''Arguments for the training process'''
         self.save_gap = 100  # save the agent after the gap
         self.cwd = None # working dir to save the model
         self.if_remove = True # if remove the cwd or keep it
         self.if_load = True # if load the current model in the cwd
         self.replace_rain = False # if replace the rainfall events
-
+        self.processes = 1 # for parallel sampling, use 0 or 1 to close multiprocess
 
         '''Arguments for test'''
         self.test_events = 8
@@ -81,7 +83,7 @@ class Arguments:
 
 
     def init_before_training(self,load=None):
-
+        self.episode = self.ini_episodes
         self.epsilon = max(self.epsilon_decay**max(self.ini_episodes-self.pre_episodes,0),self.epsilon_min)
         self.agent_class = eval(self.agent_class)
 
@@ -105,6 +107,12 @@ class Arguments:
         load = self.if_load if load is None else load
         log = Trainlogger(self.cwd,load)
         return log
+
+    def episode_update(self):
+        self.episode += 1
+        if self.episode >= self.pre_episodes:
+            self.epsilon = max(self.epsilon*self.epsilon_decay,self.epsilon_min)
+        return self.episode,self.epsilon
 
     def init_before_testing(self):
         self.agent_class = eval(self.agent_class)
