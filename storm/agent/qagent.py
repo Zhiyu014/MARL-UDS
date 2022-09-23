@@ -49,9 +49,9 @@ class QAgent:
         
         
     def act(self,observ):
-        x = convert_to_tensor(observ)
-        x = expand_dims(x,0)
-        a = self.model(x)[0].numpy().tolist()
+        # x = convert_to_tensor(observ)
+        # x = expand_dims(x,0)
+        a = self.model(observ)[0].numpy().tolist()
         return a
     
     def _hard_update_target_model(self):
@@ -65,9 +65,6 @@ class QAgent:
             + tau * model_weights
         self.target_model.set_weights(new_weight)
     
-    # deprecated
-    def _epsilon_update(self):
-        self.epsilon = max(self.epsilon*self.epsilon_decay,self.epsilon_min)
         
     def save(self,i,model_dir=None):
         if model_dir is None:

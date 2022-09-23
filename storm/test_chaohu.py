@@ -7,9 +7,10 @@ import yaml
 import os
 import multiprocessing as mp
 from ea import run_ea
+import random
 
-# os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
 
 # TODO add predictive control codes
@@ -26,7 +27,7 @@ def predict(event,arg,q):
         done = env.step(setting)
     q.put(settings)
 
-def interact_steps(env,arg,event=None,train=True,if_predict=False):
+def interact_steps(env,arg,event=None,train=False,if_predict=False):
     f = arg.agent_class(arg.observ_space,arg.action_shape,arg)
     state = env.reset(event)
     done = False
@@ -59,6 +60,45 @@ def interact_steps(env,arg,event=None,train=True,if_predict=False):
     perf = env.performance('cumulative')
     return perf
 
+def interact_steps_fail(env,arg,event=None,observ_fail=False,act_fail=False,backup=None):
+    f = arg.agent_class(arg.observ_space,arg.action_shape,arg)
+    if act_fail and type(backup) == type(arg):
+        bk = backup.agent_class(backup.observ_space,backup.action_shape,backup)
+    state = env.reset(event)
+    done = False
+    while not done:
+        if observ_fail:
+            state = state[0] + [s*int(random.random()>observ_fail) for s in state[1:]]       
+        action = f.act(state,False)
+        if act_fail:
+            fail = {k:int(random.random()>act_fail) for k in arg.site}
+            fail = [fail[act[:2]] for act in arg.action_space]
+            if backup is None:
+                setting = [sett*fail[idx] + setting[idx] * (1-fail[idx])
+                for idx,sett in enumerate(f.convert_action_to_setting(action))]
+            elif backup is hc_controller:
+                hc_setting = hc_controller(env.env._state()[1:3],setting)
+                setting = [sett*fail[idx] + hc_setting[idx] * (1-fail[idx])
+                for idx,sett in enumerate(f.convert_action_to_setting(action))]
+            elif type(backup) == type(arg):
+                bk_setting = bk.act(state,False)
+                setting = [sett*fail[idx] + bk_setting[idx] * (1-fail[idx])
+                for idx,sett in enumerate(f.convert_action_to_setting(action))]
+
+        else:
+            setting = f.convert_action_to_setting(action)
+
+        done = env.step(setting)
+        state = env.state()
+    perf = env.performance('cumulative')
+    return perf
+
+def hc_controller(depth,setting):
+    starts = [int(depth[0]>h) for h in [0.8,1,1.2,1.4]] + [int(depth[1]>h) for h in [4,4.2,4.3]]
+    shuts = [1-int(depth[0]<0.5) for _ in range(4)] + [1-int(depth[1]<h) for h in [1,1,2,1.2]]
+    setting = [max(sett,starts[i]) for i,sett in enumerate(setting)]
+    setting = [min(sett,shuts[i]) for i,sett in enumerate(setting)]
+    return setting
 
 def hc_test(env,event=None):
     def hc_controller(depth,setting):
@@ -102,13 +142,13 @@ if __name__ == '__main__':
     logger = args.init_test()
 
     # generate rainfall
-    test_event_dir = os.path.splitext(args.swmm_input)[0] + '_test_gen.inp'
+    test_event_dir = os.path.splitext(args.swmm_input)[0] + '_test.inp'
     rainpara = yaml.load(open(args.rainfall_parameters, "r"), yaml.FullLoader)
     rainpara['P'] = [1,2,3,5]
     rainpara['params'].update({'A':25.828,'C':1.3659,'n':0.9126,'b':20.515,'r':0.375})
     test_events = generate_file(args.swmm_input,
-                                # rainpara,
-                                args.rainfall_parameters,
+                                rainpara,
+                                # args.rainfall_parameters,
                                 filedir=test_event_dir,
                                 rain_num=args.test_events,
                                 replace=args.replace_rain)
@@ -144,5 +184,5 @@ if __name__ == '__main__':
             name = agent + '_predict' if args.if_predict else agent
             logger.log((target,operat,perf),name)
 
-    logger.save(os.path.join(logger.cwd,'records100.json'))
+    logger.save(os.path.join(logger.cwd,'records.json'))
     # logger.save()

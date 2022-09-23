@@ -66,30 +66,23 @@ class IQL:
 
         if args.if_load:
             self.load()
-            print("Load network: "+args.cwd)
+            # print("Load network: "+args.cwd)
 
     def act(self,state,train=True):
-        action = []
-        for i,agent in enumerate(self.agents):
+        if train and random.random() < self.epsilon:
+            action = [random.randint(0,self.action_shape[i]-1) for i in range(self.n_agents)]
+        else:
             if self.recurrent:
                 # Normalize the state
                 state = [self._normalize_state(obs) for obs in state]
                 state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
                     if len(state)<self.seq_len else state
-                o = [[obs[idx] for idx in self.observ_space[i]] for obs in state]
             else:
-                # Normalize the state
                 state = self._normalize_state(state)
-                o = [state[idx] for idx in self.observ_space[i]]
-
-            if train and random.random() < self.epsilon:
-                # Get random action
-                a = [random.random() for _ in range(self.action_shape)]
-            else:
-                # Get action from Q table
-                a = agent.act(o)
-            act = argmax(a)
-            action.append(act)
+            # Split state into multiple observations
+            observ = self._split_observ([state])
+            # Get action from Q table
+            action = [argmax(agent.act(observ[i])) for i,agent in enumerate(self.agents)]
         return action
 
     def convert_action_to_setting(self,action):
@@ -111,8 +104,6 @@ class IQL:
             loss = self._experience_replay(o, a, r, o_, d)
             self.target_update_func()
             losses.append(loss)
-        # deprecated: Decay the exploration epsilon
-        # self._epsilon_update()
         return losses
 
     def evaluate_net(self,trajs):
@@ -188,11 +179,6 @@ class IQL:
             los = self.loss_fn(target, y_pred)
             loss.append(los.numpy())   
         return loss
-
-    # deprecated
-    def _epsilon_update(self):
-        for agent in self.agents:
-            agent._epsilon_update()
             
     def episode_update(self,episode,epsilon):
         self.episode = episode

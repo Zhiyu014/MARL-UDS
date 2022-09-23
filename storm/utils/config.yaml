@@ -25,7 +25,7 @@ chaohu:
 
     # Arguments for the exploration
     total_episodes: 5000 # training steps
-    pre_episodes: 100 # pre-sampling steps
+    pre_episodes: 0 # pre-sampling steps
     ini_episodes: 0 # initial episodes n
     explore_events: 20 # exploration events
     epsilon_decay: 0.999 # epsilon-greedy noise
@@ -37,7 +37,7 @@ chaohu:
     
     # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/chaohu_VDN/reward2_2 # the working directory
+    cwd: ./model/chaohu_VDN # the working directory
     if_remove: True # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
@@ -79,7 +79,7 @@ chaohu:
     
     # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/chaohu_DQN/reward # the working directory
+    cwd: ./model/chaohu_DQN # the working directory
     if_remove: True # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
@@ -118,24 +118,66 @@ chaohu:
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/chaohu_IQL/reward # the working directory
+    cwd: ./model/chaohu_IQL # the working directory
     if_remove: True # if remove the cwd or keep it
+    if_load: False # if load the current model
+    replace_rain: False # if replace the rainfall events
+    processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
+
+  QMIX:
+    # Arguments for the agent structure
+    agent_class: QMIX # agent class
+    if_mac: True # if is multi-agent
+    if_double: True # if use double network
+    if_recurrent: False # if use recurrent
+    seq_len: 3 # recurrent sequence length
+    net_dim: 128 # dimension of hidden layers
+    num_layer: 3 # number of network layers
+    embed_shape: 256  # dimension of embed layers in the hyper network
+    if_dueling: True # if use dueling layer
+
+    # Arguments for the training
+    max_capacity: 250000 # maximum capacity for the replay buffer
+    batch_size: 128 # batch size of the training data
+    gamma: 0.95 # discouted rate
+    learning_rate: 0.0001 # learning rate
+    update_interval: 0.05 # update tau for target network
+    repeat_times: 2 # repeatedly update network using ReplayBuffer
+    loss_function: MeanSquaredError # loss function
+    optimizer: Adam # optimizer
+
+    # Arguments for the exploration
+    total_episodes: 5000 # training steps
+    pre_episodes: 100 # pre-sampling steps
+    ini_episodes: 0 # initial episodes n
+    explore_events: 20 # exploration events
+    epsilon_decay: 0.999 # epsilon-greedy noise
+    epsilon_min: 0.1 # minimum epsilon-greedy noise
+
+    # Arguments for the evaluation
+    eval_events: 1 # evaluation events
+    eval_gap: 10 # evaluate the agent per eval_gap
+    
+    # Arguments for the training process
+    save_gap: 100 # save the agent & state_norm per save_gap
+    cwd: ./model/chaohu_QMIX # the working directory
+    if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
 
   test:
     # Arguments for online search in the testing
-    test_events: 100 # testing events
+    test_events: 4 # testing events
     replace_rain: True # if repalce rain
     test_agents:
       - DQN
       - IQL
       - VDN
     if_predict: False # if use the predictive algorithm
-    cwd: results/chaohu # workdir to save the figures & table
+    cwd: results # workdir to save the figures & table
     if_remove: False # if remove the results dir
-    if_load: False # if load the current result file
+    if_load: True # if load the current result file
     
 
   # Predictive control paras

@@ -37,7 +37,7 @@ def Chicago_icm(para_tuple):
         else:
             H = HT*(r+(t/dura-r)*(1+(t-dura)/((1-r)*(dura+b)))**(-n))
         Hs.append(H)
-    tsd = diff(array(Hs))*12
+    tsd = diff(array(Hs))*60/delta
     ts = []
     for i in range(dura//delta):
         t = i*delta

@@ -63,22 +63,22 @@ class DQN:
 
 
     def act(self,state,train=True):
-        if self.recurrent:
-            # Normalize the state
-            state = [self._normalize_state(obs) for obs in state]
-            state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
-                if len(state)<self.seq_len else state
-        else:
-            # Normalize the state
-            state = self._normalize_state(state)
-
         if train and random.random() < self.epsilon:
             # Get random action
-            a = [random.random() for _ in range(self.action_shape)]
+            action = random.randint(0,self.action_shape-1)
         else:
+            if self.recurrent:
+                # Normalize the state
+                state = [self._normalize_state(obs) for obs in state]
+                state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
+                    if len(state)<self.seq_len else state
+            else:
+                # Normalize the state
+                state = self._normalize_state(state)
             # Get action from Q table
+            state = expand_dims(convert_to_tensor(state),0)
             a = self.agent.act(state)
-        action = argmax(a)
+            action = argmax(a)
         return action
 
     def convert_action_to_setting(self,action):
@@ -172,10 +172,6 @@ class DQN:
         y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_shape),axis=1)
         loss_value = self.loss_fn(targets, y_preds) 
         return loss_value.numpy()
-
-    # deprecated
-    def _epsilon_update(self):
-        self.agent._epsilon_update()
 
     def episode_update(self,episode,epsilon):
         self.episode = episode

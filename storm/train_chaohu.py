@@ -44,7 +44,7 @@ def interact_steps(env,arg,event=None,train=True,base=None):
     perf = env.performance('cumulative')
     
     if train:
-        print('Training Reward at event {0}: {1}'.format(os.path.basename(event),reward))
+        print('Training Reward at event {0}: {1}'.format(os.path.basename(event),rewards))
         print('Training Score at event {0}: {1}'.format(os.path.basename(event),perf))
         print('HC Score: %s'%base)
     else:

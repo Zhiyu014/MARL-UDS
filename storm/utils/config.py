@@ -1,5 +1,5 @@
 from .logger import Trainlogger,Testlogger
-from agent import VDN,DQN,IQL
+from agent import VDN,DQN,IQL,QMIX
 import os
 HERE = os.path.dirname(__file__)
 
