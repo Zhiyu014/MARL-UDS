@@ -8,7 +8,7 @@ from pystorms.environment import environment
 import numpy as np
 from struct import pack
 import pyswmm.toolkitapi as tkai
-
+from pyswmm.swmm5 import PySWMM
 
 class env_base(environment):
     """Environment subclassed from the original environment in pystorms
@@ -107,7 +107,16 @@ class env_base(environment):
             initial state in the network
 
         """
-        state = super().reset()
+        if not self._isFinished:
+            self.terminate()
+
+        # Start the next simulation
+        self.sim._model = PySWMM(self.config["swmm_input"])
+        self.sim._model.swmm_open()
+        self.sim._model.swmm_start()
+
+        # get the state
+        state = self._state()
         self._isFinished = False
         return state
 

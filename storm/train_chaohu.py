@@ -15,8 +15,8 @@ import multiprocessing as mp
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from utils.config import Arguments
 from functools import reduce
-# os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
 
 def interact_steps(env,arg,event=None,train=True,base=None):
@@ -55,7 +55,7 @@ def interact_steps(env,arg,event=None,train=True,base=None):
 def hc_test(env,event=None):
     def hc_controller(depth,setting):
         starts = [int(depth[0]>h) for h in [0.8,1,1.2,1.4]] + [int(depth[1]>h) for h in [4,4.2,4.3]]
-        shuts = [1-int(depth[0]<0.5) for _ in range(4)] + [1-int(depth[1]<h) for h in [1,1,2,1.2]]
+        shuts = [1-int(depth[0]<0.5) for _ in range(4)] + [1-int(depth[1]<h) for h in [1,1.2,1.2]]
         setting = [max(sett,starts[i]) for i,sett in enumerate(setting)]
         setting = [min(sett,shuts[i]) for i,sett in enumerate(setting)]
         return setting
@@ -169,7 +169,8 @@ if __name__ == '__main__':
             ctrl.save()
             memory.save()
             log.save()
-            log.plot()
+            # log.plot()
+
 
         # Update the episode and exploration greedy
         ctrl.episode_update(*args.episode_update())

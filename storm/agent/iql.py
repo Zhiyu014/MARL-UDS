@@ -35,8 +35,9 @@ class IQL:
                         for i in range(self.n_agents)]
         self.observ_space = observ_space
         self.action_shape = action_shape
-        self.action_table = getattr(args,'action_table')
+        self.action_table = getattr(args,'action_table',None)
         self.state_norm = array([[i for _ in range(args.state_shape)] for i in range(2)])
+        self.if_norm = getattr(args,'if_norm',False)
         self.epsilon = getattr(args,'epsilon',1)
 
         if not act_only:
@@ -45,6 +46,7 @@ class IQL:
             self.batch_size = getattr(args,"batch_size",256)
             self.learning_rate = getattr(args,"learning_rate",1e-5)
             self.repeat_times = getattr(args,"repeat_times",2)
+            self.global_reward = getattr(args,'global_reward',True)
             self.update_interval = getattr(args,"update_interval",0.005)
             self.target_update_func = self._hard_update_target_model if self.update_interval >1\
                 else self._soft_update_target_model
@@ -74,11 +76,13 @@ class IQL:
         else:
             if self.recurrent:
                 # Normalize the state
-                state = [self._normalize_state(obs) for obs in state]
-                state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
-                    if len(state)<self.seq_len else state
+                if self.if_norm:
+                    state = [self._normalize_state(obs) for obs in state]
+                    state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
+                        if len(state)<self.seq_len else state
             else:
-                state = self._normalize_state(state)
+                if self.if_norm:
+                    state = self._normalize_state(state)
             # Split state into multiple observations
             observ = self._split_observ([state])
             # Get action from Q table
@@ -86,8 +90,12 @@ class IQL:
         return action
 
     def convert_action_to_setting(self,action):
-        setting = self.action_table[tuple(action)]
-        return setting
+        if self.action_table is not None:
+            setting = self.action_table[tuple(action)]
+            return setting
+        else:
+            setting = [int(act) for act in action]
+            return setting
 
     def update_net(self,memory,batch_size=None):
         # Update the state & reward normalization paras
@@ -99,7 +107,8 @@ class IQL:
         losses = []
         for _ in range(update_times):
             s, a, r, s_, d = memory.sample(batch_size)
-            s,s_ = self._normalize_state(s),self._normalize_state(s_)
+            if self.if_norm:
+                s,s_ = self._normalize_state(s),self._normalize_state(s_)
             o,o_ = self._split_observ(s),self._split_observ(s_)
             loss = self._experience_replay(o, a, r, o_, d)
             self.target_update_func()
@@ -108,7 +117,8 @@ class IQL:
 
     def evaluate_net(self,trajs):
         s, a, r, s_, d = [[traj[i] for traj in trajs] for i in range(5)]
-        s,s_ = self._normalize_state(s),self._normalize_state(s_)
+        if self.if_norm:
+            s,s_ = self._normalize_state(s),self._normalize_state(s_)
 
         if self.recurrent:
             s = [[s[0] for _ in range(self.seq_len-i-1)]+s[:i+1] for i in range(self.seq_len-1)]+\
@@ -141,7 +151,8 @@ class IQL:
 
 
     def _experience_replay(self, o, a, r, o_, d):
-        o,r,o_,d = [convert_to_tensor(i,dtype=float32) for i in [o,r,o_,d]]
+        o,o_ = [[convert_to_tensor(oi,dtype=float32) for oi in x] for x in [o,o_]]
+        r,d = [convert_to_tensor(i,dtype=float32) for i in [r,d]]
         a = convert_to_tensor(a)
 
         loss = []
@@ -151,7 +162,11 @@ class IQL:
                 target_q_value = reduce_sum(agent.target_model(o_[idx])*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
             else:
                 target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
-            target = r + self.gamma * target_q_value * (1-d)
+            if self.global_reward:
+                target = r + self.gamma * target_q_value * (1-d)
+            else:
+                target = r[:,idx] + self.gamma * target_q_value * (1-d)
+
             # los = self._train_on_agent(agent.model,o[idx],a[:,idx],target)
             with GradientTape() as tape:
                 tape.watch(o)
@@ -164,7 +179,8 @@ class IQL:
         return loss
 
     def _test_loss(self, o, a, r, o_, d):
-        o,r,o_,d = [convert_to_tensor(i,dtype=float32) for i in [o,r,o_,d]]
+        o,o_ = [[convert_to_tensor(oi,dtype=float32) for oi in x] for x in [o,o_]]
+        r,d = [convert_to_tensor(i,dtype=float32) for i in [r,d]]
         a = convert_to_tensor(a)
 
         loss = []
@@ -174,7 +190,10 @@ class IQL:
                 target_q_value = reduce_sum(agent.target_model(o_[idx])*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
             else:
                 target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
-            target = r + self.gamma * target_q_value * (1-d)
+            if self.global_reward:
+                target = r + self.gamma * target_q_value * (1-d)
+            else:
+                target = r[:,idx] + self.gamma * target_q_value * (1-d)
             y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
             los = self.loss_fn(target, y_pred)
             loss.append(los.numpy())   

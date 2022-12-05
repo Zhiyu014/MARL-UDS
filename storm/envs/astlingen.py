@@ -8,6 +8,7 @@ from swmm_api.input_file.sections import FilesSection,Control
 import datetime
 from functools import reduce
 from itertools import product
+from collections import deque
 
 HERE = os.path.dirname(__file__)
 
@@ -40,7 +41,7 @@ class astlingen(scenario):
 
     """
 
-    def __init__(self, config_file=None, swmm_file=None, if_predict=False):
+    def __init__(self, config_file=None, swmm_file=None, if_predict=False,initialize = True):
         # Network configuration
         config_file = os.path.join(HERE,"config","astlingen.yaml") \
             if config_file is None else config_file
@@ -49,7 +50,8 @@ class astlingen(scenario):
             if swmm_file is None else swmm_file
         
         # Create the environment based on the physical parameters
-        self.env = env_ast(self.config, ctrl=True)
+        if initialize:
+            self.env = env_ast(self.config, ctrl=True)
         
         self.penalty_weight = {ID: weight
                                for ID, _, weight in \
@@ -64,8 +66,8 @@ class astlingen(scenario):
         # Implement the actions and take a step forward
         if advance_seconds is None and 'control_interval' in self.config:
             advance_seconds = self.config['control_interval'] * 60
-        if actions is not None:
-            actions = self._convert_actions(actions)
+        # if actions is not None:
+        #     actions = self._convert_actions(actions)
 
         done = self.env.step(actions, advance_seconds = advance_seconds)
         
@@ -74,52 +76,112 @@ class astlingen(scenario):
             self._logger()
 
         # Log the performance
-        self._calc_perf_value()
+        __performance = 0.0
+        for ID, attribute, weight in self.config["performance_targets"]:
+            __cumvolume = self.env.methods[attribute](ID)
+            # Recent volume has been logged
+            if len(self.data_log[attribute][ID]) > 1:
+                __volume = __cumvolume - self.data_log[attribute][ID][-2]
+            else:
+                __volume = __cumvolume
+            # __weight = self.penalty_weight[ID]
+            __performance += __volume * weight
+
+        # Record the _performance
+        self.data_log["performance_measure"].append(__performance)
 
         # Terminate the simulation
         if done:
             self.env.terminate()
         return done
 
-    def state(self):
+    def state(self, seq = False):
         # Observe from the environment
         if self.env._isFinished:
-            __state = [self.data_log[attribute][ID][-1]
-             for ID,attribute in self.config["states"]]
+            # if seq:
+            #     __state = [list(self.data_log[attribute][ID])[-seq:]
+            #     for ID,attribute in self.config["states"]]
+            # else:
+                __state = [self.data_log[attribute][ID][-1]
+                for ID,attribute in self.config["states"]]
         else:
             __state = self.env._state()
-        
+            # if seq:
+            #     __state = [list(self.data_log[attribute][ID])[-seq:-1] + [__state[idx]]
+            #     for idx,(ID,attribute) in enumerate(self.config["states"])]
+                    
         state = []
         for idx,(ID,attribute) in enumerate(self.config["states"]):
             if attribute in ['depthN','rainfall']:
                 state.append(__state[idx])
             else:
+                # if seq:
+                #     if len(self.data_log[attribute][ID]) > seq:
+                #         __value = np.diff(self.data_log[attribute][ID][-seq-1:-seq]+__state)
+                #     else:
+                #         __value = np.diff([0] + __state)
+                #     state.append(__value)
+                # else:
                 if len(self.data_log[attribute][ID]) > 1:
                     __value = __state[idx] - self.data_log[attribute][ID][-2]
                     state.append(__value)
                 else:
                     state.append(__state[idx])
-        state = np.asarray(state)
+        state = np.asarray(state).T if seq else np.asarray(state)
         return state
 
-    def reset(self,swmm_file=None):
-        # clear the data log and reset the environment
-        if swmm_file is None:
-            _ = self.env.reset()
-            state = self.state()
+    def reward(self,norm=False):
+
+        # Calculate the target error in the recent step based on cumulative values
+        __reward = 0.0
+        __sumnorm = 0.0
+        for ID, attribute, weight in self.config["reward"]:
+            if self.env._isFinished:
+                __cumvolume = self.data_log[attribute][ID][-1]
+            else:
+                __cumvolume = self.env.methods[attribute](ID)
+            # Recent volume has been logged
+            if len(self.data_log[attribute][ID]) > 1:
+                __volume = __cumvolume - self.data_log[attribute][ID][-2]
+            else:
+                __volume = __cumvolume
+
+            if attribute == "totalinflow" and ID not in ["Out_to_WWTP","system"]:
+                if len(self.data_log[attribute][ID]) > 2:
+                    __prevolume = self.data_log[attribute][ID][-2] - self.data_log[attribute][ID][-3]
+                elif len(self.data_log[attribute][ID]) == 2:
+                    __prevolume = self.data_log[attribute][ID][-2]
+                else:
+                    __prevolume = 0
+                __volume = abs(__volume - __prevolume)
+            # __weight = self.penalty_weight[ID]
+            if ID == 'system':
+                __sumnorm += __volume * weight
+            else:
+                __reward += __volume * weight
+        if norm:
+            return - __reward/(__sumnorm + 1e-5)
         else:
-            # change the swmm inp file
+            return - __reward
+
+    def reset(self,swmm_file=None,seq=False):
+        # clear the data log and reset the environment
+        if swmm_file is not None:
             self.config["swmm_input"] = swmm_file
+        if not hasattr(self,'env') or swmm_file is not None:
             self.env = env_ast(self.config, ctrl=True)
-            state = self.state()
+        else:
+            _ = self.env.reset()
+
         self.initialize_logger()
+        state = self.state(seq)
         return state
         
-    def initialize_logger(self, config=None):
+    def initialize_logger(self, config=None,maxlen=None):
         # Create an object for storing the data points
         self.data_log = {
-            "performance_measure": [],
-            "simulation_time": [],
+            "performance_measure": deque(maxlen=maxlen),
+            "simulation_time": deque(maxlen=maxlen),
             "setting": {}
         }
         config = self.config if config is None else config
@@ -127,30 +189,34 @@ class astlingen(scenario):
         for ID, attribute, _ in config["performance_targets"]:
             if attribute not in self.data_log.keys():
                 self.data_log[attribute] = {}
-            self.data_log[attribute][ID] = []
+            self.data_log[attribute][ID] = deque(maxlen=maxlen)
             
         for ID, attribute in config["states"]:
             if attribute not in self.data_log.keys():
                 self.data_log[attribute] = {}
-            self.data_log[attribute][ID] = []
+            self.data_log[attribute][ID] = deque(maxlen=maxlen)
 
         for ID in config["action_space"].keys():
-            self.data_log["setting"][ID] = []
+            self.data_log["setting"][ID] = deque(maxlen=maxlen)
         
+        for ID, attribute, _ in config["reward"]:
+            if attribute not in self.data_log.keys():
+                self.data_log[attribute] = {}
+            self.data_log[attribute][ID] = deque(maxlen=maxlen)
         # if self.if_predict:
         #     self.data_log.update({"hotstart_file": [],
         #     "evaluation_file": []})
 
-    def _convert_actions(self,actions):
-        if actions is not None:
-            if type(actions) == list or type(actions) == np.ndarray:
-                if {type(a) for a in actions} == {int}:
-                    actions = [options[actions[idx]]
-                    for idx,options in enumerate(self.config['action_space'].values())]
-            elif type(actions) == dict and {type(v) for v in actions.values()} == {int}:
-                actions = [self.config['action_space'][k][v]
-                for k,v in actions.items()]
-        return actions
+    # def _convert_actions(self,actions):
+    #     if actions is not None:
+    #         if type(actions) == list or type(actions) == np.ndarray:
+    #             if {type(a) for a in actions} == {int}:
+    #                 actions = [options[actions[idx]]
+    #                 for idx,options in enumerate(self.config['action_space'].values())]
+    #         elif type(actions) == dict and {type(v) for v in actions.values()} == {int}:
+    #             actions = [self.config['action_space'][k][v]
+    #             for k,v in actions.items()]
+    #     return actions
 
     def _logger(self):
         super()._logger()
@@ -169,29 +235,7 @@ class astlingen(scenario):
         #     self.data_log["hotstart_file"].append(hsf_file)
         #     self.data_log["evaluation_file"].append(eval_file)
 
-        
-    def _calc_perf_value(self):
-        # Calculate the target error in the recent step based on cumulative values
-        __performance = 0.0
-        for ID, attribute, weight in self.config["performance_targets"]:
-            __cumvolume = self.env.methods[attribute](ID)
-            # Recent volume has been logged
-            if len(self.data_log[attribute][ID]) > 1:
-                __volume = __cumvolume - self.data_log[attribute][ID][-2]
-            else:
-                __volume = __cumvolume
 
-            if attribute == "totalinflow" and ID != "Out_to_WWTP":
-                if len(self.data_log[attribute][ID]) > 1:
-                    __prevolume = np.diff([0]+self.data_log[attribute][ID])[-2]
-                else:
-                    __prevolume = 0
-                __volume = abs(__volume - __prevolume)
-            # __weight = self.penalty_weight[ID]
-            __performance += __volume * weight
-
-        # Record the _performance
-        self.data_log["performance_measure"].append(__performance)
 
     def get_action_table(self,if_mac):
         action_table = {}
@@ -202,15 +246,20 @@ class astlingen(scenario):
                 action_table[site] = [v[site[i]]
                     for i,v in enumerate(self.config['action_space'].values())]
             else:
-                action_table[idx] = [v[site[i]]
+                action_table[(idx,)] = [v[site[i]]
                     for i,v in enumerate(self.config['action_space'].values())]
         return action_table
 
     def get_args(self,if_mac = True):
         args = self.config.copy()
         # Rainfall timeseries & events files
-        args['rainfall_timeseries'] = os.path.join(HERE,'config',args['rainfall_timeseries']+'.csv')
-        args['rainfall_events'] = os.path.join(HERE,'config',args['rainfall_events']+'.csv')
+        if not os.path.isfile(args['rainfall']['rainfall_timeseries']):
+            args['rainfall']['rainfall_timeseries'] = os.path.join(HERE,'config',args['rainfall']['rainfall_timeseries']+'.csv')
+        if not os.path.isfile(args['rainfall']['rainfall_events']):
+            args['rainfall']['rainfall_events'] = os.path.join(HERE,'config',args['rainfall']['rainfall_events']+'.csv')
+        if not os.path.isfile(args['rainfall']['training_events']):
+            args['rainfall']['training_events'] = os.path.join(HERE,'config',args['rainfall']['training_events']+'.csv')
+
         # Control interval for step_advance
         args['state_shape'] = len(args['states'])
         if if_mac:
@@ -222,7 +271,7 @@ class astlingen(scenario):
             args['observ_space'] = [[state.index(o) for o in v['states']]
             for v in args['site'].values()]
 
-            args['action_shape'] = [len(v['action_space']) for v in args['site'].values()]
+            args['action_shape'] = [len(args['action_space'][k]) for k in args['site']]
 
         else:
             args['n_agents'] = 1
@@ -241,7 +290,7 @@ class astlingen(scenario):
             ct = self.env.methods['simulation_time']()
             hsf_file = '%s.hsf'%ct.strftime('%Y-%m-%d-%H-%M')
             hsf_file = os.path.join(os.path.dirname(self.config['swmm_input']),
-            self.config['hsf_dir'],hsf_file)
+            self.config['prediction']['hsf_dir'],hsf_file)
         if os.path.exists(os.path.dirname(hsf_file)) == False:
             os.mkdir(os.path.dirname(hsf_file))
         return self.env.save_hotstart(hsf_file)
@@ -253,8 +302,8 @@ class astlingen(scenario):
         # Set the simulation time & hsf options
         inp['OPTIONS']['START_DATE'] = inp['OPTIONS']['REPORT_START_DATE'] = ct.date()
         inp['OPTIONS']['START_TIME'] = inp['OPTIONS']['REPORT_START_TIME'] = ct.time()
-        inp['OPTIONS']['END_DATE'] = (ct + datetime.timedelta(minutes=self.config['eval_horizon'])).date()
-        inp['OPTIONS']['END_TIME'] = (ct + datetime.timedelta(minutes=self.config['eval_horizon'])).time()
+        inp['OPTIONS']['END_DATE'] = (ct + datetime.timedelta(minutes=self.config['prediction']['eval_horizon'])).date()
+        inp['OPTIONS']['END_TIME'] = (ct + datetime.timedelta(minutes=self.config['prediction']['eval_horizon'])).time()
         
         if hsf_file is not None:
             if 'FILES' not in inp:
@@ -262,23 +311,23 @@ class astlingen(scenario):
             inp['FILES']['USE HOTSTART'] = hsf_file
         
         # Set the Control Rules
-        inp['CONTROLS'] = Control.create_section()
-        for i in range(self.config['control_horizon']//self.config['control_interval']):
-            time = round(self.config['control_interval']/60*(i+1),2)
-            conditions = [Control._Condition('IF','SIMULATION','TIME', '<', str(time))]
-            actions = []
-            for idx,k in enumerate(self.config['action_space']):
-                logic = 'THEN' if idx == 0 else 'AND'
-                kind = self.env.methods['getlinktype'](k)
-                action = Control._Action(logic,kind,k,'SETTING','=',str('1.0'))
-                actions.append(action)
-            inp['CONTROLS'].add_obj(Control('P%s'%(i+1),conditions,actions,priority=5-i))
+        # inp['CONTROLS'] = Control.create_section()
+        # for i in range(self.config['prediction']['control_horizon']//self.config['control_interval']):
+        #     time = round(self.config['control_interval']/60*(i+1),2)
+        #     conditions = [Control._Condition('IF','SIMULATION','TIME', '<', str(time))]
+        #     actions = []
+        #     for idx,k in enumerate(self.config['action_space']):
+        #         logic = 'THEN' if idx == 0 else 'AND'
+        #         kind = self.env.methods['getlinktype'](k)
+        #         action = Control._Action(logic,kind,k,'SETTING','=',str('1.0'))
+        #         actions.append(action)
+        #     inp['CONTROLS'].add_obj(Control('P%s'%(i+1),conditions,actions,priority=5-i))
     
 
         # Output the eval file
         eval_inp_file = os.path.join(os.path.dirname(self.config['swmm_input']),
-                                self.config['eval_dir'],
-                                self.config['suffix']+os.path.basename(self.config['swmm_input']))
+                                self.config['prediction']['eval_dir'],
+                                self.config['prediction']['suffix']+os.path.basename(self.config['swmm_input']))
         if os.path.exists(os.path.dirname(eval_inp_file)) == False:
             os.mkdir(os.path.dirname(eval_inp_file))
         inp.write_file(eval_inp_file)

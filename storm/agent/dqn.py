@@ -4,7 +4,7 @@ Created on Wed Aug 18 16:23:18 2021
 
 @author: MOMO
 """
-from tensorflow import one_hot,convert_to_tensor,GradientTape,transpose,cast,float32,reduce_max,eye,reduce_sum
+from tensorflow import one_hot,convert_to_tensor,GradientTape,transpose,cast,float32,reduce_max,eye,reduce_sum,squeeze
 from tensorflow import keras as ks
 from tensorflow import expand_dims,matmul
 from numpy import argmax,array,save,load
@@ -14,8 +14,8 @@ from os.path import join
 import random
 class DQN:
     def __init__(self,
-            state_shape: int,
-            action_shape: int,
+            observ_space: int,
+            action_shape: int or list,
             args = None,
             act_only = False):
 
@@ -23,16 +23,21 @@ class DQN:
         self.model_dir = args.cwd
 
         self.recurrent = getattr(args,"if_recurrent",False)
-        self.n_agents = getattr(args, "n_agents", 2)
+        self.n_agents = getattr(args, "n_agents", 1)
+        self.state_shape = getattr(args, "state_shape", 10)
+        self.observ_space = observ_space
+        self.action_shape = action_shape
+        self.if_mac = getattr(args,'if_mac',False)            
+        output_size = sum(self.action_shape) if self.if_mac else self.action_shape
+        input_size = self.state_shape if self.if_mac else self.observ_space
         if self.recurrent:
             self.seq_len = getattr(args,"seq_len",3)
-            self.agent = QRAgent(action_shape,state_shape,self.seq_len,args) 
+            self.agent = QRAgent(output_size,input_size,self.seq_len,args) 
         else:
-            self.agent = QAgent(action_shape,state_shape,args)
-        self.state_shape = state_shape
-        self.action_shape = action_shape
-        self.action_table = getattr(args,'action_table')
-        self.state_norm = array([[i for _ in range(state_shape)] for i in range(2)])
+            self.agent = QAgent(output_size,input_size,args)
+        self.action_table = getattr(args,'action_table',None)
+        self.state_norm = array([[i for _ in range(self.state_shape)] for i in range(2)])
+        self.if_norm = getattr(args,'if_norm',False)
         self.epsilon = getattr(args,'epsilon',1)
 
         if not act_only:
@@ -65,25 +70,40 @@ class DQN:
     def act(self,state,train=True):
         if train and random.random() < self.epsilon:
             # Get random action
-            action = random.randint(0,self.action_shape-1)
+            if self.if_mac:
+                action = [random.randint(0,shape-1) for shape in self.action_shape]
+            else:
+                action = (random.randint(0,self.action_shape-1),)
         else:
             if self.recurrent:
                 # Normalize the state
-                state = [self._normalize_state(obs) for obs in state]
+                if self.if_norm:
+                    state = [self._normalize_state(obs) for obs in state]
                 state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
                     if len(state)<self.seq_len else state
             else:
                 # Normalize the state
-                state = self._normalize_state(state)
+                if self.if_norm:
+                    state = self._normalize_state(state)
             # Get action from Q table
             state = expand_dims(convert_to_tensor(state),0)
             a = self.agent.act(state)
-            action = argmax(a)
+            if self.if_mac:
+                action = []
+                for i,shape in enumerate(self.action_shape):
+                    j = sum(self.action_shape[:i])
+                    action.append(argmax(a[j:j + shape]))
+            else:
+                action = (argmax(a),)
         return action
 
     def convert_action_to_setting(self,action):
-        setting = self.action_table[action]
-        return setting
+        if self.action_table is not None:
+            setting = self.action_table[tuple(action)]
+            return setting
+        else:
+            setting = [int(act) for act in action]
+            return setting
 
 
     def update_net(self,memory,batch_size=None):
@@ -96,7 +116,8 @@ class DQN:
         losses = []
         for _ in range(update_times):
             s, a, r, s_, d = memory.sample(batch_size)
-            s,s_ = self._normalize_state(s),self._normalize_state(s_)
+            if self.if_norm:
+                s,s_ = self._normalize_state(s),self._normalize_state(s_)
             loss = self._experience_replay(s,a,r,s_,d)
             self.target_update_func()
             losses.append(loss)
@@ -107,7 +128,8 @@ class DQN:
 
     def evaluate_net(self,trajs):
         s, a, r, s_, d = [[traj[i] for traj in trajs] for i in range(5)]
-        s,s_ = self._normalize_state(s),self._normalize_state(s_)
+        if self.if_norm:
+            s,s_ = self._normalize_state(s),self._normalize_state(s_)
 
         if self.recurrent:
             s = [[s[0] for _ in range(self.seq_len-i-1)]+s[:i+1] for i in range(self.seq_len-1)]+\
@@ -128,6 +150,8 @@ class DQN:
         
         s,r,s_,d = [convert_to_tensor(i,dtype=float32) for i in [s,r,s_,d]]
         a = convert_to_tensor(a)
+        if not self.if_mac:
+            a = squeeze(a)
         
         targets = self._calculate_target(r,s_,d)
         
@@ -145,7 +169,11 @@ class DQN:
         with GradientTape() as tape:
             tape.watch(s)
             y_preds = self.agent.model(s)
-            y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_shape),axis=1)
+            if self.if_mac:
+                y_preds = [reduce_sum(y_preds[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]*one_hot(a[:,i],shape),axis=1) for i,shape in enumerate(self.action_shape)]
+                y_preds = reduce_sum(convert_to_tensor(y_preds),axis=0)
+            else:
+                y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_shape),axis=1)
             loss_value = self.loss_fn(targets, y_preds)
         grads = tape.gradient(loss_value, self.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
@@ -153,8 +181,14 @@ class DQN:
 
     def _calculate_target(self,r,s_,d):
         if self.double:
-            argmax_actions = ks.backend.argmax(self.agent.model(s_))
-            target_q_values = reduce_sum(self.agent.target_model(s_)*one_hot(argmax_actions,self.action_shape),axis=1)
+            if self.if_mac:
+                argmax_actions = [ks.backend.argmax(self.agent.model(s_)[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]) for i,shape in enumerate(self.action_shape)]
+                target_q_values = self.agent.target_model(s_)
+                target_q_values = [reduce_sum(target_q_values[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]*one_hot(argmax_actions[i],shape),axis=1) for i,shape in enumerate(self.action_shape)]
+                target_q_values = reduce_sum(convert_to_tensor(target_q_values),axis=0)
+            else:
+                argmax_actions = ks.backend.argmax(self.agent.model(s_))
+                target_q_values = reduce_sum(self.agent.target_model(s_)*one_hot(argmax_actions,self.action_shape),axis=1)
         else:
             target_q_values = reduce_max(self.agent.target_model(s_),axis=1) 
         discounted_reward_batch = self.gamma * target_q_values
@@ -165,11 +199,16 @@ class DQN:
 
         s,r,s_,d = [convert_to_tensor(i,dtype=float32) for i in [s,r,s_,d]]
         a = convert_to_tensor(a)
-
+        if not self.if_mac:
+            a = squeeze(a)
         targets = self._calculate_target(r,s_,d)
         
         y_preds = self.agent.model(s)
-        y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_shape),axis=1)
+        if self.if_mac:
+            y_preds = [reduce_sum(y_preds[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]*one_hot(a[:,i],shape),axis=1) for i,shape in enumerate(self.action_shape)]
+            y_preds = reduce_sum(convert_to_tensor(y_preds),axis=0)
+        else:
+            y_preds = reduce_sum(y_preds*one_hot(a, depth = self.action_shape),axis=1)
         loss_value = self.loss_fn(targets, y_preds) 
         return loss_value.numpy()
 

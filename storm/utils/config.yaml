@@ -1,11 +1,12 @@
 # Environment name
 chaohu:
-  train: VDN
+  train: DQN
   # strategies
   VDN:
     # Arguments for the agent structure
     agent_class: VDN # agent class
     if_mac: True # if is multi-agent
+    if_norm: True # if use normalized state
     if_double: True # if use double network
     if_recurrent: False # if use recurrent
     seq_len: 3 # recurrent sequence length
@@ -14,7 +15,7 @@ chaohu:
     if_dueling: True # if use dueling layer
 
     # Arguments for the training
-    max_capacity: 250000 # maximum capacity for the replay buffer
+    max_capacity: 524288 # 2**19 maximum capacity for the replay buffer
     batch_size: 128 # batch size of the training data
     gamma: 0.95 # discouted rate
     learning_rate: 0.0001 # learning rate
@@ -25,7 +26,7 @@ chaohu:
 
     # Arguments for the exploration
     total_episodes: 5000 # training steps
-    pre_episodes: 0 # pre-sampling steps
+    pre_episodes: 100 # pre-sampling steps
     ini_episodes: 0 # initial episodes n
     explore_events: 20 # exploration events
     epsilon_decay: 0.999 # epsilon-greedy noise
@@ -38,7 +39,7 @@ chaohu:
     # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
     cwd: ./model/chaohu_VDN # the working directory
-    if_remove: True # if remove the cwd or keep it
+    if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
@@ -47,6 +48,7 @@ chaohu:
     # Arguments for the agent structure
     agent_class: DQN # agent class
     if_mac: False # if is multi-agent
+    if_norm: True # if use normalized state
     if_double: True # if use double network
     if_recurrent: False # if use recurrent
     seq_len: 3 # recurrent sequence length
@@ -55,7 +57,7 @@ chaohu:
     if_dueling: True # if use dueling layer
 
     # Arguments for the training
-    max_capacity: 250000 # maximum capacity for the replay buffer
+    max_capacity: 524288 # maximum capacity for the replay buffer
     batch_size: 128 # batch size of the training data
     gamma: 0.95 # discouted rate
     learning_rate: 0.0001 # learning rate
@@ -80,7 +82,7 @@ chaohu:
     # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
     cwd: ./model/chaohu_DQN # the working directory
-    if_remove: True # if remove the cwd or keep it
+    if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
@@ -89,6 +91,7 @@ chaohu:
     # Arguments for the agent structure
     agent_class: IQL # agent class
     if_mac: True # if is multi-agent
+    if_norm: True # if use normalized state
     if_double: True # if use double network
     if_recurrent: False # if use recurrent
     seq_len: 3 # recurrent sequence length
@@ -97,7 +100,7 @@ chaohu:
     if_dueling: True # if use dueling layer
 
     # Arguments for the training
-    max_capacity: 250000 # maximum capacity for the replay buffer
+    max_capacity: 524288 # maximum capacity for the replay buffer
     batch_size: 128 # batch size of the training data
     gamma: 0.95 # discouted rate
     learning_rate: 0.0001 # learning rate
@@ -119,7 +122,7 @@ chaohu:
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
     cwd: ./model/chaohu_IQL # the working directory
-    if_remove: True # if remove the cwd or keep it
+    if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
@@ -128,6 +131,7 @@ chaohu:
     # Arguments for the agent structure
     agent_class: QMIX # agent class
     if_mac: True # if is multi-agent
+    if_norm: True # if use normalized state
     if_double: True # if use double network
     if_recurrent: False # if use recurrent
     seq_len: 3 # recurrent sequence length
@@ -137,7 +141,7 @@ chaohu:
     if_dueling: True # if use dueling layer
 
     # Arguments for the training
-    max_capacity: 250000 # maximum capacity for the replay buffer
+    max_capacity: 524288 # maximum capacity for the replay buffer
     batch_size: 128 # batch size of the training data
     gamma: 0.95 # discouted rate
     learning_rate: 0.0001 # learning rate
@@ -166,28 +170,14 @@ chaohu:
     replace_rain: False # if replace the rainfall events
     processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
 
-  test:
-    # Arguments for online search in the testing
-    test_events: 4 # testing events
-    replace_rain: True # if repalce rain
-    test_agents:
-      - DQN
-      - IQL
-      - VDN
-    if_predict: False # if use the predictive algorithm
-    cwd: results # workdir to save the figures & table
-    if_remove: False # if remove the results dir
-    if_load: True # if load the current result file
-    
-
   # Predictive control paras
-  predict:
-    algorithm: NSGA2
+  MPC:
+    algorithm: GA
     pop_size: 32
     sampling: 
       !!python/tuple
         # type
-        - Initialize
+        - BinaryRandomSampling
         # probability
         - 0.4
     crossover:
@@ -201,28 +191,47 @@ chaohu:
     mutation:
       !!python/tuple
         # type
-        - PM
+        - BitflipMutation
         # probability
-        - 1.0
+        - 0.5
         # eta
-        - 3.0
+        - 0.3
     termination:
       !!python/tuple
         - time
-        - 00:03:00
+        - 00:08:00
         # - n_gen
         # - 5
     seed: 1
     # threads to run the evaluation
-    threads: 4
+    processes: 8
+
+
+  test:
+    # Arguments for online search in the testing
+    test_events: 100 # testing events
+    replace_rain: False # if replace rain
+    test_agents:
+      DQN: reward
+      IQL: reward
+      VDN: train
+    if_predict: False # if use the predictive algorithm
+    cwd: results/chaohu # workdir to save the figures & table
+    test_name: records  # json name
+    if_remove: False # if remove the results dir
+    if_load: False # if load the current result file
+    
 
 # Environment name
 astlingen:
+  train: DQN
   # strategy
   VDN:
     # Arguments for the agent structure
     agent_class: VDN # agent class
     if_mac: True # if is multi-agent
+    if_norm: False # if use normalized state
+    if_double: True # if use double network
     if_recurrent: False # if use recurrent
     seq_len: 3 # recurrent sequence length
     net_dim: 128 # dimension of hidden layers# dimension of hidden layers
@@ -230,20 +239,20 @@ astlingen:
     if_dueling: True # if use dueling layer
 
     # Arguments for the training
-    max_capacity: 250000 # maximum capacity for the replay buffer
-    batch_size: 128 # batch size of the training data
+    max_capacity: 1048576 # 2 ** 20 maximum capacity for the replay buffer
+    batch_size: 512 # batch size of the training data
     gamma: 0.98 # discouted rate
-    learning_rate: 0.0001 # learning rate
+    learning_rate: 0.001 # learning rate
     update_interval: 0.05 # update tau for target network
     repeat_times: 2 # repeatedly update network using ReplayBuffer
     loss_function: MeanSquaredError # loss function
-    optimizer: Adam # optimizer
+    optimizer: Adam # optimizer 
 
     # Arguments for the exploration
     total_episodes: 5000 # training steps
-    pre_episodes: 2 # pre-sampling steps
+    pre_episodes: 0 # pre-sampling steps
     ini_episodes: 0 # initial episodes n
-    explore_events: 20 # exploration events
+    explore_events: 50 # exploration events
     epsilon_decay: 0.999 # epsilon-greedy noise
     epsilon_min: 0.1 # minimum epsilon-greedy noise
 
@@ -252,20 +261,101 @@ astlingen:
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
     cwd: ./model/astlingen_VDN # the working directory
-    if_remove: True # if remove the cwd or keep it
+    if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
-    replace_rain: True # if replace the rainfall events
+    replace_rain: False # if replace the rainfall events
+    processes: 5 # if use multiprocessing
+
+  DQN:
+    # Arguments for the agent structure
+    agent_class: DQN # agent class
+    if_mac: True # if is multi-agent
+    if_norm: False # # if use normalized state
+    if_double: True # if use double network
+    if_recurrent: False # if use recurrent
+    seq_len: 3 # recurrent sequence length
+    net_dim: 256 # dimension of hidden layers# dimension of hidden layers
+    num_layer: 3 # number of network layers
+    if_dueling: True # if use dueling layer
+
+    # Arguments for the training
+    max_capacity: 1048576 # 2 ** 20 maximum capacity for the replay buffer
+    batch_size: 512 # batch size of the training data
+    gamma: 0.98 # discouted rate
+    learning_rate: 0.001 # learning rate
+    update_interval: 0.05 # update tau for target network
+    repeat_times: 2 # repeatedly update network using ReplayBuffer
+    loss_function: MeanSquaredError # loss function
+    optimizer: Adam # optimizer 
+
+    # Arguments for the exploration
+    total_episodes: 5000 # training steps
+    pre_episodes: 0 # pre-sampling steps
+    ini_episodes: 0 # initial episodes n
+    explore_events: 50 # exploration events
+    epsilon_decay: 0.999 # epsilon-greedy noise
+    epsilon_min: 0.1 # minimum epsilon-greedy noise
+
+    # Arguments for the evaluation
+    eval_events: 1 # evaluation events
+    eval_gap: 10 # evaluate the agent per eval_gap
+    save_gap: 100 # save the agent & state_norm per save_gap
+    cwd: ./model/astlingen_DQN # the working directory
+    if_remove: False # if remove the cwd or keep it
+    if_load: False # if load the current model
+    replace_rain: False # if replace the rainfall events
+    processes: 5 # if use multiprocessing
+
+  IQL:
+    # Arguments for the agent structure
+    agent_class: IQL # agent class
+    if_mac: True # if is multi-agent
+    if_norm: False # # if use normalized state
+    if_double: True # if use double network
+    if_recurrent: False # if use recurrent
+    seq_len: 3 # recurrent sequence length
+    net_dim: 128 # dimension of hidden layers# dimension of hidden layers
+    num_layer: 3 # number of network layers
+    if_dueling: True # if use dueling layer
+
+    # Arguments for the training
+    max_capacity: 1048576 # 2 ** 20 maximum capacity for the replay buffer
+    batch_size: 512 # batch size of the training data
+    gamma: 0.98 # discouted rate
+    learning_rate: 0.001 # learning rate
+    update_interval: 0.05 # update tau for target network
+    repeat_times: 2 # repeatedly update network using ReplayBuffer
+    loss_function: MeanSquaredError # loss function
+    optimizer: Adam # optimizer 
+
+    # Arguments for the exploration
+    total_episodes: 5000 # training steps
+    pre_episodes: 0 # pre-sampling steps
+    ini_episodes: 0 # initial episodes n
+    explore_events: 50 # exploration events
+    epsilon_decay: 0.999 # epsilon-greedy noise
+    epsilon_min: 0.1 # minimum epsilon-greedy noise
+
+    # Arguments for the evaluation
+    eval_events: 1 # evaluation events
+    eval_gap: 10 # evaluate the agent per eval_gap
+    save_gap: 100 # save the agent & state_norm per save_gap
+    cwd: ./model/astlingen_IQL # the working directory
+    if_remove: False # if remove the cwd or keep it
+    if_load: False # if load the current model
+    replace_rain: False # if replace the rainfall events
+    processes: 5 # if use multiprocessing
 
   MPC:
     # Arguments for online search in the testing
     test_events: 8 # testing events
     if_predict: False # if use the predictive algorithm
-    algorithm: NSGA2
+    algorithm: GA
     pop_size: 32
     sampling: 
       !!python/tuple
         # type
-        - Initialize
+        - IntegerRandomSampling
         # probability
         - 0.4
     crossover:
@@ -292,3 +382,97 @@ astlingen:
         # - 5
     # threads to run the evaluation
     threads: 4
+
+  test:
+    # Arguments for online search in the testing
+    # TODO: formulate proper argues
+    rainfall:  # testing events
+      rainfall_timeseries: ./envs/config/ast_rain.csv # rainfall timeseries data
+      rainfall_events: ./envs/config/ast_rain_events.csv # rainfall timeseries data
+      MIET: 120 # minimum interevent time (min)
+      duration_range:  # rainfall duration sampling range (min)
+        - 60
+        - 100000
+      precipitation_range: # rainfall precipitation sampling range (mm)
+        - 5
+        - 15
+      date_range: # rainfall precipitation sampling range (mm)
+        - 01/01/2000
+        - 12/31/2009
+      replace_rain: False # if repalce rain
+      test_events: all # number of events
+        # - '02/28/2007-12'
+        # - '08/22/2007-21'
+        # - '07/03/2008-18'
+        # - '09/25/2008-13'
+
+    test_agents:
+      DQN: reward
+      IQL: reward
+      VDN: reward
+
+    fail: # if test the failure robustness
+      fail_num: 50
+      sensor_fail: False
+      obs_sensi: False
+      obs_fail: True
+      act_fail: False
+      backup: # backup agents for action communication failure
+        - 
+        - BC
+        - IQL
+        - VDN
+
+    processes: 5 # if use multi-processing
+    if_predict: False # if use the predictive algorithm
+    cwd: results/astlingen # workdir to save the figures & table
+    test_name: records # json name
+    if_remove: False # if remove the results dir
+    if_load: False # if load the current result file
+
+RedChicoSur:
+  train: IQL
+  # strategies
+  IQL:
+    # Arguments for the agent structure
+    agent_class: IQL # agent class
+    if_mac: True # if is multi-agent
+    if_double: True # if use double network
+    if_recurrent: False # if use recurrent
+    seq_len: 3 # recurrent sequence length
+    net_dim: 64 # dimension of hidden layers
+    hidden_dim: 64 # dimension of hidden layers
+    num_layer: 3 # number of network layers
+    if_dueling: True # if use dueling layer
+
+    # Arguments for the training
+    max_capacity: 250000 # maximum capacity for the replay buffer
+    batch_size: 128 # batch size of the training data
+    gamma: 0.93 # discouted rate
+    learning_rate: 0.0001 # learning rate
+    update_interval: 0.05 # update tau for target network
+    repeat_times: 2 # repeatedly update network using ReplayBuffer
+    global_reward: False # formulate a global reward for all the agents
+    loss_function: MeanSquaredError # loss function
+    optimizer: Adam # optimizer
+
+    # Arguments for the exploration
+    total_episodes: 1000 # training steps
+    pre_episodes: 10 # pre-sampling steps
+    ini_episodes: 0 # initial episodes n
+    # explore_events: 20 # exploration events
+    epsilon_decay: 0.995 # epsilon-greedy noise
+    epsilon_min: 0.1 # minimum epsilon-greedy noise
+
+    # Arguments for the evaluation
+    # eval_events: 1 # evaluation events
+    eval_gap: 10 # evaluate the agent per eval_gap
+    
+    # Arguments for the training process
+    save_gap: 50 # save the agent & state_norm per save_gap
+    cwd: ./model/RedChicoSur/IQL_10 # the working directory
+    if_remove: False # if remove the cwd or keep it
+    if_load: False # if load the current model
+    # replace_rain: False # if replace the rainfall events
+    # processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
+

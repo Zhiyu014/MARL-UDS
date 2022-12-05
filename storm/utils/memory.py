@@ -43,8 +43,7 @@ class RandomMemory():
     def save(self,cwd=None):
         cwd = self.cwd if cwd is None else cwd
         for item in self.items:
-            data = np.array(getattr(self,item))
-            np.save(os.path.join(cwd,'experience_%s.npy'%item),data)
+            np.save(os.path.join(cwd,'experience_%s.npy'%item),np.array(getattr(self,item)))
             print('Save experience %s'%item)
 
 

@@ -176,12 +176,8 @@ def generate_split_file(base_inp_file=None,
                         timeseries_file=None,
                         event_file=None,
                         filedir = None,
-                        rain_num = 1, 
-                        MIET = 120,
-                        if_replace = False,
-                        dura_range = (60,1e6),
-                        precip_range=(5,15),
-                        args = None):
+                        rain_num = 1,
+                        rain_arg = None):
     """
     Generate multiple inp files containing rainfall events
     separated from continous rainfall events.
@@ -206,48 +202,69 @@ def generate_split_file(base_inp_file=None,
         A list of inp files.
 
     """
-    if args is not None:
-        if_replace = getattr(args,'if_replace',if_replace)
-        MIET = getattr(args,'MIET',MIET)
-        dura_range = getattr(args,'duration_range',dura_range)
-        precip_range = getattr(args,'precipitation_range',precip_range)
-
+    if rain_arg is not None:
+        replace_rain = rain_arg.get('replace_rain',False)
+        MIET = rain_arg.get('MIET',120)
+        # if dura_range is None:
+        dura_range = rain_arg.get('duration_range',None)
+        # if precip_range is None:
+        precip_range = rain_arg.get('precipitation_range',None)
+        # if date_range is None:
+        date_range = rain_arg.get('date_range',None)
     # Read inp & data files & event file
-    if base_inp_file is None:
-        base_inp_file = args.swmm_input
     inp = read_inp_file(base_inp_file)
 
-    files = list()
-    filedir = splitext(base_inp_file)[0] if filedir is None else filedir
-    filedir = splitext(filedir)[0]+'_%s.inp'
-    files = [filedir%idx for idx in range(rain_num)]
-    # Skip generation if not replace
-    if set([exists(file) for file in files]) == {True} and not if_replace:
-        return files
-
     if timeseries_file is None:
-        timeseries_file = args.rainfall_timeseries
+        timeseries_file = rain_arg['rainfall_timeseries']
     tsf = pd.read_csv(timeseries_file,index_col=0)
     tsf['datetime'] = tsf['date']+' '+tsf['time']
     tsf['datetime'] = tsf['datetime'].apply(lambda dt:datetime.strptime(dt, '%m/%d/%Y %H:%M:%S'))
 
     if event_file is None:
-        event_file = getattr(args,'rainfall_events',splitext(timeseries_file)[0]+'_events.csv')
+        event_file = rain_arg.get('rainfall_events',splitext(timeseries_file)[0]+'_events.csv')
         if not exists(event_file):
             event_file = serapate_events(timeseries_file, MIET)
-    events = pd.read_csv(event_file,index_col=0)
-    events = events[events['Duration'].apply(lambda x:dura_range[0]<=x<=dura_range[1])]
-    events = events[events['Precipitation'].apply(lambda x:precip_range[0]<=x<=precip_range[1])]
-    events = events.sample(rain_num)
     
-    for idx,(start,end) in enumerate(zip(events['Start'],events['End'])):
-        file = filedir%idx
-        if exists(file) == True and if_replace == False:
-            continue
-        
+    events = pd.read_csv(event_file,index_col=0) if type(event_file) == str else event_file
+
+    if dura_range is not None:
+        events = events[events['Duration'].apply(lambda x:dura_range[0]<=x<=dura_range[1])]
+    if precip_range is not None:
+        events = events[events['Precipitation'].apply(lambda x:precip_range[0]<=x<=precip_range[1])]
+    if date_range is not None:
+        date_range = [datetime.strptime(date,'%m/%d/%Y') for date in date_range]
+        events['Date'] = events['Date'].apply(lambda date:datetime.strptime(date,'%m/%d/%Y'))
+        events = events[events['Date'].apply(lambda x:date_range[0]<=x<=date_range[1])]
+
+
+    filedir = splitext(base_inp_file)[0] if filedir is None else filedir
+    filedir = splitext(filedir)[0]+'_%s.inp'
+
+
+    if type(rain_num) == int:
+        # files = [filedir%idx for idx in range(rain_num)]
+        events = events.sample(rain_num)
+    elif type(rain_num) == list:
+        events = events[events['Start'].apply(lambda x:x.split(':')[0].replace(' ','-') in rain_num)]
+    # elif rain_num == 'all':
+    #     files = [filedir%idx for idx in range(rain_num)]
+
+    # # Skip generation if not replace
+    # new_files = [file for file in files if not exists(file) or if_replace]
+    # if len(new_files) == 0:
+    #     return files
+
+    files = list()
+    for start,end in zip(events['Start'],events['End']):
         # Formulate the simulation periods
         start_time = datetime.strptime(start,'%m/%d/%Y %H:%M:%S')
-        end_time = datetime.strptime(end,'%m/%d/%Y %H:%M:%S') + timedelta(minutes = MIET)            
+        end_time = datetime.strptime(end,'%m/%d/%Y %H:%M:%S') + timedelta(minutes = MIET)   
+
+        file = filedir%start_time.strftime('%m_%d_%Y_%H')
+        files.append(file)
+        if exists(file) == True and replace_rain == False:
+            continue
+
         rain = tsf[start_time < tsf['datetime']]
         rain = rain[rain['datetime'] < end_time]
         raindata = [[[date+' '+time,vol]
@@ -265,7 +282,6 @@ def generate_split_file(base_inp_file=None,
         inp.OPTIONS['REPORT_START_DATE'] = start_time.date()
         inp.OPTIONS['REPORT_START_TIME'] = start_time.time()
         inp.write_file(file)
-
     return files
 
 
@@ -320,11 +336,11 @@ def get_depth_setting(event,tanks=None,pumps=None):
     if tanks is not None:
         depths = out.get_part('node',tanks,'depth')
         data = pd.concat([data,depths],axis=1)
-        data.columns = ['rainfall']+tanks
+        # data.columns = list(data.columns) + tanks
     if pumps is not None:
         settings = out.get_part('link',pumps,'capacity')
         data = pd.concat([data,settings],axis=1)
-        data.columns = ['rainfall'] + tanks + pumps
+        # data.columns = list(data.columns) + pumps
     return data
 
 

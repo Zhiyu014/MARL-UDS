@@ -16,10 +16,12 @@ class Arguments:
         '''Arguments for agents'''
         self.agent_class = 'VDN'
         self.if_mac = True
-        self.net_dim = 128
-        self.num_layer = 3
+        self.if_norm = False
+        self.if_double = True
         self.if_recurrent = False
         self.seq_len = 3
+        self.net_dim = 128
+        self.num_layer = 3
         self.if_dueling = True
         
         '''Argurments for exploration'''
@@ -82,17 +84,20 @@ class Arguments:
 
 
 
-    def init_before_training(self,load=None):
-        self.episode = self.ini_episodes
-        self.epsilon = max(self.epsilon_decay**max(self.ini_episodes-self.pre_episodes,0),self.epsilon_min)
-        self.agent_class = eval(self.agent_class)
+    def init_before_training(self,episode=None,remove=None,load=None):
+        self.episode = self.ini_episodes if episode is None else episode
+        self.epsilon = max(self.epsilon_decay**max(self.episode-self.pre_episodes,0),self.epsilon_min)
+        if type(self.agent_class) is str:
+            self.agent_class = eval(self.agent_class)
 
         if self.cwd is None:
             wkdir = os.path.split(HERE)[0]
             self.cwd = os.path.join(wkdir,'model','{0}_{1}'.format(self.env_name, self.agent_class))
         else:
             self.cwd = os.path.abspath(self.cwd)
-        if self.if_remove:
+
+        remove = self.if_remove if remove is None else remove
+        if remove:
             import shutil
             shutil.rmtree(self.cwd,ignore_errors=True)
             print(f"| Arguments Remove cwd: {self.cwd}")
@@ -114,7 +119,7 @@ class Arguments:
             self.epsilon = max(self.epsilon*self.epsilon_decay,self.epsilon_min)
         return self.episode,self.epsilon
 
-    def init_before_testing(self):
+    def init_before_testing(self,item=None):
         self.agent_class = eval(self.agent_class)
         self.if_load = True
         self.if_remove = False
@@ -123,9 +128,11 @@ class Arguments:
             self.cwd = os.path.join(wkdir,'model','{0}_{1}'.format(self.env_name, self.agent_class))
         else:
             self.cwd = os.path.abspath(self.cwd)
+        if item is not None:
+            self.cwd = os.path.join(self.cwd,item)
         print(f"| Arguments Keep cwd: {self.cwd}")
 
-    def init_test(self,load=None):
+    def init_test(self,columns = ['target','operation','performance'],load=None):
         if self.cwd is None:
             wkdir = os.path.split(HERE)[0]
             self.cwd = os.path.join(wkdir,'result',self.env_name)
@@ -133,7 +140,7 @@ class Arguments:
             self.cwd = os.path.abspath(self.cwd)
 
         load = self.if_load if load is None else load
-        log = Testlogger(self.cwd,load)
+        log = Testlogger(self.cwd,columns,load)
 
 
         if not load and self.if_remove:

@@ -115,6 +115,11 @@ class chaohu(scenario):
             # Normalize the node depths
             if attribute in ['depthN']:
                 state.append(__state[idx]/self.node_properties[ID]['fullDepth'])
+            elif attribute == 'cumprecip':
+                ds = [0]+self.data_log[attribute][ID]
+                __value = np.diff(ds[eval(ID)-1:])[0] if len(ds)>abs(eval(ID)) else 0.0
+                state.append(__value)
+
             else:
                 # Calculate the recent volume based on cumulative value
                 # log must be True
@@ -160,7 +165,11 @@ class chaohu(scenario):
             if attribute not in reward.keys():
                 reward[attribute] = dict()
             if attribute == 'depthN':
-                reward[attribute][ID] = __reward[idx]/self.node_properties[ID]['initDepth']
+                reward[attribute][ID] = __reward[idx]/self.node_properties[ID]['fullDepth']
+            elif attribute == 'cumprecip':
+                ds = [0]+self.data_log[attribute][ID]
+                __value = np.diff(ds[eval(ID)-1:])[0] if len(ds)>abs(eval(ID)) else 0.0
+                reward[attribute][ID] = __value
             else:
                 if len(self.data_log[attribute][ID]) > 1:
                     reward[attribute][ID] = __reward[idx] - self.data_log[attribute][ID][-2]
@@ -169,12 +178,17 @@ class chaohu(scenario):
 
         value = 0
         if sum(reward['cumprecip'].values()) > 0:
-            value += sum([v-1 for v in reward['depthN'].values()])
+            value += 2*sum([v for v in reward['depthN'].values()])
         else:
-            value += sum([1-v for v in reward['depthN'].values()])
-        value -= sum(reward['pumpenergy'].values()) * 0.2
+            value += 2*sum([1-v for v in reward['depthN'].values()])
 
-        value -= 0.1 * sum(reward["cumflooding"].values())
+        value -= 0.01 * sum(reward['pumpenergy'].values()) 
+
+        value -= 2 * sum([v for k,v in reward["cumflooding"].items() if k.endswith('storage')==False])/\
+            sum([v for k,v in reward["totalinflow"].items() if k.endswith('storage')])
+        value -= 5 * sum([int(v>0) for k,v in reward["cumflooding"].items() if k.endswith('storage')])
+        value -= sum([v for k,v in reward["totalinflow"].items() if k.endswith('storage')==False])/\
+            sum([v for k,v in reward["totalinflow"].items() if k.endswith('storage')])
 
         if done and baseline is not None:
             total_flood_cso = self.performance('cumulative')
@@ -256,7 +270,7 @@ class chaohu(scenario):
                 for com,acts in zip(comb,actions):
                     for c,a in zip(com,acts):
                         action += [1]*c + [0]*(a-1-c)
-                action_table[i] = action
+                action_table[(i,)] = action
         return action_table
             
     def get_args(self,if_mac = True):

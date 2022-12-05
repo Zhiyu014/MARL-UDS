@@ -9,7 +9,7 @@ rainfall_parameters: rainparas
 # state definitions
 states:
     - !!python/tuple
-      - "system"
+      - "-4"
       - cumprecip
     - !!python/tuple
       - "CC-storage"
@@ -102,48 +102,69 @@ performance_targets:
 
 # reward-related variables
 reward:
-    - !!python/tuple
-      - "system"
-      - cumprecip
-    - !!python/tuple
-      - "CC-storage"
-      - depthN
-    - !!python/tuple
-      - "JK-storage"
-      - depthN
-    - !!python/tuple
-      - "CC-storage"
-      - cumflooding
-    - !!python/tuple
-      - "JK-storage"
-      - cumflooding
-    - !!python/tuple
-      - "CC-S1"
-      - pumpenergy
-    - !!python/tuple
-      - "CC-S2"
-      - pumpenergy
-    - !!python/tuple
-      - "CC-R1"
-      - pumpenergy
-    - !!python/tuple
-      - "CC-R2"
-      - pumpenergy
-    - !!python/tuple
-      - "JK-S"
-      - pumpenergy
-    - !!python/tuple
-      - "JK-R1"
-      - pumpenergy
-    - !!python/tuple
-      - "JK-R2"
-      - pumpenergy
+  - !!python/tuple
+    - "-5"
+    - cumprecip
+  - !!python/tuple
+    - "CC-storage"
+    - depthN
+  - !!python/tuple
+    - "JK-storage"
+    - depthN
+  - !!python/tuple
+    - "system"
+    - cumflooding
+  - !!python/tuple
+    - "CC-storage"
+    - cumflooding
+  - !!python/tuple
+    - "JK-storage"
+    - cumflooding
+  - !!python/tuple
+    - "CC-storage"
+    - totalinflow
+  - !!python/tuple
+    - "JK-storage"
+    - totalinflow
+  - !!python/tuple
+    - "CC-1"
+    - totalinflow
+  - !!python/tuple
+    - "CC-2"
+    - totalinflow
+  - !!python/tuple
+    - "JK-1"
+    - totalinflow
+  - !!python/tuple
+    - "JK-2"
+    - totalinflow
+  - !!python/tuple
+    - "CC-S1"
+    - pumpenergy
+  - !!python/tuple
+    - "CC-S2"
+    - pumpenergy
+  - !!python/tuple
+    - "CC-R1"
+    - pumpenergy
+  - !!python/tuple
+    - "CC-R2"
+    - pumpenergy
+  - !!python/tuple
+    - "JK-S"
+    - pumpenergy
+  - !!python/tuple
+    - "JK-R1"
+    - pumpenergy
+  - !!python/tuple
+    - "JK-R2"
+    - pumpenergy
 
 # distributed control sites
 site:
   CC:
     states:
-      - "system"
+      - "-4"
       - "CC-storage"
       - "YS02001757"
       - "WS02006253"
@@ -158,7 +179,7 @@ site:
         - "CC-R2"
   JK:
     states:
-      - "system"
+      - "-4"
       - "JK-storage"
       - "YS02001907"
       - "WS02006238"

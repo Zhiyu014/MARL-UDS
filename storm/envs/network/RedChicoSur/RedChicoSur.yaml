@@ -1,0 +1,875 @@
+action_space:
+  G6: &id001 !!python/tuple
+  - 0
+  - 1
+  GA1: *id001
+  GA10: *id001
+  GA11: *id001
+  GA12: *id001
+  GA13: *id001
+  GA14: *id001
+  GA15: *id001
+  GA16: *id001
+  GA17: *id001
+  GA18: *id001
+  GA19: *id001
+  GA2: *id001
+  GA20: *id001
+  GA21: *id001
+  GA22: *id001
+  GA23: *id001
+  GA24: *id001
+  GA25: *id001
+  GA3: *id001
+  GA4: *id001
+  GA5: *id001
+  GA7: *id001
+  GA8: *id001
+  GA9: *id001
+  GB1: *id001
+  GB10: *id001
+  GB11: *id001
+  GB12: *id001
+  GB13: *id001
+  GB14: *id001
+  GB15: *id001
+  GB16: *id001
+  GB17: *id001
+  GB18: *id001
+  GB19: *id001
+  GB2: *id001
+  GB20: *id001
+  GB21: *id001
+  GB22: *id001
+  GB23: *id001
+  GB24: *id001
+  GB25: *id001
+  GB3: *id001
+  GB4: *id001
+  GB5: *id001
+  GB7: *id001
+  GB8: *id001
+  GB9: *id001
+  GC10: *id001
+  GC20: *id001
+  GC25: *id001
+  GC3: *id001
+  GD3: *id001
+control_interval: 5
+env_name: RedChicoSur
+performance_target: !!python/tuple
+- system
+- cumflooding
+- 1
+sites:
+  G6:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92984
+    - depthN
+    - 1
+    states:
+    - &id002 !!python/tuple
+      - PMP92984
+      - depthN
+    - &id003 !!python/tuple
+      - PMP92984G6
+      - depthN
+  GA1:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92886
+    - depthN
+    - 1
+    states:
+    - &id004 !!python/tuple
+      - PMP92886
+      - depthN
+    - &id005 !!python/tuple
+      - PMP92886GA1
+      - depthN
+  GA10:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93079
+    - depthN
+    - 1
+    states:
+    - &id020 !!python/tuple
+      - PMP93079
+      - depthN
+    - &id021 !!python/tuple
+      - PMP93079GA10
+      - depthN
+  GA11:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93155
+    - depthN
+    - 1
+    states:
+    - &id022 !!python/tuple
+      - PMP93155
+      - depthN
+    - &id023 !!python/tuple
+      - PMP93155GA11
+      - depthN
+  GA12:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93012
+    - depthN
+    - 1
+    states:
+    - &id024 !!python/tuple
+      - PMP93012
+      - depthN
+    - &id025 !!python/tuple
+      - PMP93012GA12
+      - depthN
+  GA13:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93004
+    - depthN
+    - 1
+    states:
+    - &id026 !!python/tuple
+      - PMP93004
+      - depthN
+    - &id027 !!python/tuple
+      - PMP93004GA13
+      - depthN
+  GA14:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93003
+    - depthN
+    - 1
+    states:
+    - &id028 !!python/tuple
+      - PMP93003
+      - depthN
+    - &id029 !!python/tuple
+      - PMP93003GA14
+      - depthN
+  GA15:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92863
+    - depthN
+    - 1
+    states:
+    - &id030 !!python/tuple
+      - PMP92863
+      - depthN
+    - &id031 !!python/tuple
+      - PMP92863GA15
+      - depthN
+  GA16:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP930991
+    - depthN
+    - 1
+    states:
+    - &id032 !!python/tuple
+      - PMP930991
+      - depthN
+    - &id033 !!python/tuple
+      - PMP93099G16
+      - depthN
+  GA17:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92955
+    - depthN
+    - 1
+    states:
+    - &id034 !!python/tuple
+      - PMP92955
+      - depthN
+    - &id035 !!python/tuple
+      - PMP92955GA17
+      - depthN
+  GA18:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92893
+    - depthN
+    - 1
+    states:
+    - &id036 !!python/tuple
+      - PMP92893
+      - depthN
+    - &id037 !!python/tuple
+      - PMP92893GA18
+      - depthN
+  GA19:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92991
+    - depthN
+    - 1
+    states:
+    - &id038 !!python/tuple
+      - PMP92991
+      - depthN
+    - &id039 !!python/tuple
+      - PMP92991GA19
+      - depthN
+  GA2:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93062
+    - depthN
+    - 1
+    states:
+    - &id006 !!python/tuple
+      - PMP93062
+      - depthN
+    - &id007 !!python/tuple
+      - PMP93062GA2
+      - depthN
+  GA20:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93077GA20
+    - depthN
+    - 1
+    states:
+    - &id040 !!python/tuple
+      - PMP93077GA20
+      - depthN
+    - &id041 !!python/tuple
+      - PMP93077
+      - depthN
+  GA21:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93039
+    - depthN
+    - 1
+    states:
+    - &id042 !!python/tuple
+      - PMP93039
+      - depthN
+    - &id043 !!python/tuple
+      - PMP93039GA21
+      - depthN
+  GA22:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93205
+    - depthN
+    - 1
+    states:
+    - &id044 !!python/tuple
+      - PMP93205
+      - depthN
+    - &id045 !!python/tuple
+      - PMP93205GA22
+      - depthN
+  GA23:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92962GA23
+    - depthN
+    - 1
+    states:
+    - &id046 !!python/tuple
+      - PMP92962GA23
+      - depthN
+    - &id047 !!python/tuple
+      - PMP92962
+      - depthN
+  GA24:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93046GA24
+    - depthN
+    - 1
+    states:
+    - &id048 !!python/tuple
+      - PMP93046GA24
+      - depthN
+    - &id049 !!python/tuple
+      - PMP93046
+      - depthN
+  GA25:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92891
+    - depthN
+    - 1
+    states:
+    - &id050 !!python/tuple
+      - PMP92891
+      - depthN
+    - &id051 !!python/tuple
+      - PMP92891GA25
+      - depthN
+  GA3:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92843
+    - depthN
+    - 1
+    states:
+    - &id008 !!python/tuple
+      - PMP92843
+      - depthN
+    - &id009 !!python/tuple
+      - PMP92843GA3
+      - depthN
+  GA4:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93093
+    - depthN
+    - 1
+    states:
+    - &id010 !!python/tuple
+      - PMP93093
+      - depthN
+    - &id011 !!python/tuple
+      - PMP93093GA4
+      - depthN
+  GA5:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93100
+    - depthN
+    - 1
+    states:
+    - &id012 !!python/tuple
+      - PMP93100
+      - depthN
+    - &id013 !!python/tuple
+      - PMP93100GA5
+      - depthN
+  GA7:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92914GA7
+    - depthN
+    - 1
+    states:
+    - &id014 !!python/tuple
+      - PMP92914GA7
+      - depthN
+    - &id015 !!python/tuple
+      - PMP92914
+      - depthN
+  GA8:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93011
+    - depthN
+    - 1
+    states:
+    - &id016 !!python/tuple
+      - PMP93011
+      - depthN
+    - &id017 !!python/tuple
+      - PMP93011GA8
+      - depthN
+  GA9:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93008
+    - depthN
+    - 1
+    states:
+    - &id018 !!python/tuple
+      - PMP93008
+      - depthN
+    - &id019 !!python/tuple
+      - PMP93008GA9
+      - depthN
+  GB1:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92906
+    - depthN
+    - 1
+    states:
+    - &id052 !!python/tuple
+      - PMP92906
+      - depthN
+    - &id053 !!python/tuple
+      - PMP92906GB1
+      - depthN
+  GB10:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP930512
+    - depthN
+    - 1
+    states:
+    - &id068 !!python/tuple
+      - PMP930512
+      - depthN
+    - &id069 !!python/tuple
+      - PMP930512GB10
+      - depthN
+  GB11:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93227
+    - depthN
+    - 1
+    states:
+    - &id070 !!python/tuple
+      - PMP93227
+      - depthN
+    - &id071 !!python/tuple
+      - PMP93227GB11
+      - depthN
+  GB12:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93058
+    - depthN
+    - 1
+    states:
+    - &id072 !!python/tuple
+      - PMP93058
+      - depthN
+    - &id073 !!python/tuple
+      - PMP93058GB12
+      - depthN
+  GB13:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92964
+    - depthN
+    - 1
+    states:
+    - &id074 !!python/tuple
+      - PMP92964
+      - depthN
+    - &id075 !!python/tuple
+      - PMP92964GB13
+      - depthN
+  GB14:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93000GB14
+    - depthN
+    - 1
+    states:
+    - &id076 !!python/tuple
+      - PMP93000GB14
+      - depthN
+    - &id077 !!python/tuple
+      - PMP93000
+      - depthN
+  GB15:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93036
+    - depthN
+    - 1
+    states:
+    - &id078 !!python/tuple
+      - PMP93036
+      - depthN
+    - &id079 !!python/tuple
+      - PMP93036GB15
+      - depthN
+  GB16:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP930992
+    - depthN
+    - 1
+    states:
+    - &id080 !!python/tuple
+      - PMP930992
+      - depthN
+    - &id081 !!python/tuple
+      - PMP93099G16
+      - depthN
+  GB17:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93031GB17
+    - depthN
+    - 1
+    states:
+    - &id082 !!python/tuple
+      - PMP93031GB17
+      - depthN
+    - &id083 !!python/tuple
+      - PMP93031
+      - depthN
+  GB18:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92990GB18
+    - depthN
+    - 1
+    states:
+    - &id084 !!python/tuple
+      - PMP92990GB18
+      - depthN
+    - &id085 !!python/tuple
+      - PMP92990
+      - depthN
+  GB19:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93073
+    - depthN
+    - 1
+    states:
+    - &id086 !!python/tuple
+      - PMP93073
+      - depthN
+    - &id087 !!python/tuple
+      - PMP93073GB19
+      - depthN
+  GB2:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92853
+    - depthN
+    - 1
+    states:
+    - &id054 !!python/tuple
+      - PMP92853
+      - depthN
+    - &id055 !!python/tuple
+      - PMP92853GB2
+      - depthN
+  GB20:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92901
+    - depthN
+    - 1
+    states:
+    - &id088 !!python/tuple
+      - PMP92901
+      - depthN
+    - &id089 !!python/tuple
+      - PMP92901GB20
+      - depthN
+  GB21:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93040
+    - depthN
+    - 1
+    states:
+    - &id090 !!python/tuple
+      - PMP93040
+      - depthN
+    - &id091 !!python/tuple
+      - PMP93040GB21
+      - depthN
+  GB22:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMCI106387
+    - depthN
+    - 1
+    states:
+    - &id092 !!python/tuple
+      - PMCI106387
+      - depthN
+    - &id093 !!python/tuple
+      - PMCI106387GB22
+      - depthN
+  GB23:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93038
+    - depthN
+    - 1
+    states:
+    - &id094 !!python/tuple
+      - PMP93038
+      - depthN
+    - &id095 !!python/tuple
+      - PMP93038GB23
+      - depthN
+  GB24:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92932
+    - depthN
+    - 1
+    states:
+    - &id096 !!python/tuple
+      - PMP92932
+      - depthN
+    - &id097 !!python/tuple
+      - PMP92932GB24
+      - depthN
+  GB25:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93092GB25
+    - depthN
+    - 1
+    states:
+    - &id098 !!python/tuple
+      - PMP93092GB25
+      - depthN
+    - &id099 !!python/tuple
+      - PMP93092
+      - depthN
+  GB3:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92918
+    - depthN
+    - 1
+    states:
+    - &id056 !!python/tuple
+      - PMP92918
+      - depthN
+    - &id057 !!python/tuple
+      - PMP92918GB3
+      - depthN
+  GB4:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93066
+    - depthN
+    - 1
+    states:
+    - &id058 !!python/tuple
+      - PMP93066
+      - depthN
+    - &id059 !!python/tuple
+      - PMP93066GB4
+      - depthN
+  GB5:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92958
+    - depthN
+    - 1
+    states:
+    - &id060 !!python/tuple
+      - PMP92958
+      - depthN
+    - &id061 !!python/tuple
+      - PMP92958GB5
+      - depthN
+  GB7:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92949
+    - depthN
+    - 1
+    states:
+    - &id062 !!python/tuple
+      - PMP92949
+      - depthN
+    - &id063 !!python/tuple
+      - PMP92949GB7
+      - depthN
+  GB8:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93014
+    - depthN
+    - 1
+    states:
+    - &id064 !!python/tuple
+      - PMP93014
+      - depthN
+    - &id065 !!python/tuple
+      - PMP93014GB8
+      - depthN
+  GB9:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93051
+    - depthN
+    - 1
+    states:
+    - &id066 !!python/tuple
+      - PMP93051
+      - depthN
+    - &id067 !!python/tuple
+      - PMP93051GB9
+      - depthN
+  GC10:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93213
+    - depthN
+    - 1
+    states:
+    - &id102 !!python/tuple
+      - PMP93213
+      - depthN
+    - &id103 !!python/tuple
+      - PMP93213GC10
+      - depthN
+  GC20:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP92828
+    - depthN
+    - 1
+    states:
+    - &id104 !!python/tuple
+      - PMP92828
+      - depthN
+    - &id105 !!python/tuple
+      - PMP92828GB20
+      - depthN
+  GC25:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93097
+    - depthN
+    - 1
+    states:
+    - &id106 !!python/tuple
+      - PMP93097
+      - depthN
+    - &id107 !!python/tuple
+      - PMP93097GC25
+      - depthN
+  GC3:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93027
+    - depthN
+    - 1
+    states:
+    - &id100 !!python/tuple
+      - PMP93027
+      - depthN
+    - &id101 !!python/tuple
+      - PMP93027GC3
+      - depthN
+  GD3:
+    action_space: *id001
+    performance_target: !!python/tuple
+    - PMP93094
+    - depthN
+    - 1
+    states:
+    - &id108 !!python/tuple
+      - PMP93094
+      - depthN
+    - &id109 !!python/tuple
+      - PMP93094GD3
+      - depthN
+states:
+- *id002
+- *id003
+- *id004
+- *id005
+- *id006
+- *id007
+- *id008
+- *id009
+- *id010
+- *id011
+- *id012
+- *id013
+- *id014
+- *id015
+- *id016
+- *id017
+- *id018
+- *id019
+- *id020
+- *id021
+- *id022
+- *id023
+- *id024
+- *id025
+- *id026
+- *id027
+- *id028
+- *id029
+- *id030
+- *id031
+- *id032
+- *id033
+- *id034
+- *id035
+- *id036
+- *id037
+- *id038
+- *id039
+- *id040
+- *id041
+- *id042
+- *id043
+- *id044
+- *id045
+- *id046
+- *id047
+- *id048
+- *id049
+- *id050
+- *id051
+- *id052
+- *id053
+- *id054
+- *id055
+- *id056
+- *id057
+- *id058
+- *id059
+- *id060
+- *id061
+- *id062
+- *id063
+- *id064
+- *id065
+- *id066
+- *id067
+- *id068
+- *id069
+- *id070
+- *id071
+- *id072
+- *id073
+- *id074
+- *id075
+- *id076
+- *id077
+- *id078
+- *id079
+- *id080
+- *id081
+- *id082
+- *id083
+- *id084
+- *id085
+- *id086
+- *id087
+- *id088
+- *id089
+- *id090
+- *id091
+- *id092
+- *id093
+- *id094
+- *id095
+- *id096
+- *id097
+- *id098
+- *id099
+- *id100
+- *id101
+- *id102
+- *id103
+- *id104
+- *id105
+- *id106
+- *id107
+- *id108
+- *id109

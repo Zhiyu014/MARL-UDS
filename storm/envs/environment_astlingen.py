@@ -28,13 +28,17 @@ class env_ast(env_base):
     
     def _getNodeTotalInflow(self,ID):
         # Cumulative inflow volume
-        return self.sim._model.node_inflow(ID)
+        if ID == 'system':
+            stats = self.sim._model.flow_routing_stats()
+            return sum([v for k,v in stats.items() if k.endswith('inflow')])
+        else:
+            return self.sim._model.node_inflow(ID)
 
 
     def _getGageRainfall(self,ID):
         # For Cumrainfall state
-        return self.sim._model.getGagePrecip(ID)[
-            tkai.RainGageResults.rainfall.value]
+        return self.sim._model.getGagePrecip(ID,
+            tkai.RainGageResults.rainfall.value)
 
     def _getLinkType(self,ID):
         # For control formulation

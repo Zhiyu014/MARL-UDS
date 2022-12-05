@@ -42,8 +42,7 @@ class Trainlogger:
     def save(self,model_dir=None):
         model_dir = self.cwd if model_dir is None else model_dir
         for attr in self.attrs:
-            value = getattr(self,attr)
-            np.save(os.path.join(model_dir,'%s.npy'%attr),value)
+            np.save(os.path.join(model_dir,'%s.npy'%attr),getattr(self,attr))
 
     def load(self,model_dir=None):
         model_dir = self.cwd if model_dir is None else model_dir
@@ -140,12 +139,16 @@ class Trainlogger:
         else:
             fig.savefig(filedir)
             fig2.savefig(filedir)
-
-
+        # plt.close('all')
+        # plt.clf()
+        del fig
+        del fig2
+        
 class Testlogger:
-    def __init__(self,model_dir,load=False):
+    def __init__(self,model_dir,columns,load=False):
         self.records = {}
         self.cwd = model_dir
+        self.columns = columns
         self.event = None
         if load:
             self.load()
@@ -153,15 +156,13 @@ class Testlogger:
     def log(self,data,name,event=None,P=None):
         event = self.event if event is None else event
         if event in self.records:
-            self.records[event]['target'][name] = data[0].to_json()
-            self.records[event]['operation'][name] = data[1].to_json()
-            self.records[event]['performance'][name] = data[2]
+            for col,dat in zip(self.columns,data):
+                self.records[event][col][name] = dat
         elif event is None:
             pass
         else:
-            self.records[event] = {'target':{name:data[0].to_json()},
-            'operation':{name:data[1].to_json()},
-            'performance':{name:data[2]}}
+            self.records[event] = {col:{name:dat} 
+            for col,dat in zip(self.columns,data)}
         if P is not None:
             self.records[event]['P'] = P
         self.event = event
