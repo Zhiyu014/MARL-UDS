@@ -3,6 +3,8 @@ Source code, data and figures for the MARL-enabled real-time control of urban dr
 
 ## UDS Environments
 1. **Astlingen**: A benchmark model of a combined sewer system with 6 storage tanks and 4 controllable outflow orifices. The SWMM model [Astlingen](https://github.com/open-toolbox/SWMM-Astlingen) is the case area. Thanks to Dr. Sun and other contributers for developing this model.
+    - Sun C, Lorenz Svensen J, Borup M, Puig V, Cembrano G, Vezzaro L. An MPC-Enabled SWMM Implementation of the Astlingen RTC Benchmarking Network. Water. 2020; 12(4):1034. https://doi.org/10.3390/w12041034
+    - Schütze, M.; Lange, M.; Pabst, M.; Haas, U. Astlingen—A benchmark for real time control (RTC). Water Sci. Technol. 2017, 2, 552–560. https://doi.org/10.2166/wst.2018.172
 
 2. **chaohu**: A real-case model of a combined sewer system with 3 pump stations and forebays. Papers using this model:
     - Liao, Z., Gu, X., Xie, J., Wang, X., & Chen, J. (2019). An integrated assessment of drainage system reconstruction based on a drainage networkmodel. Environmental Science and Pollution Research, 26(26), 26563–26576. https://www.researchgate.net/deref/https%3A%2F%2Fdoi.org%2F10.1007%2Fs11356-019-05280-1
