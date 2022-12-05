@@ -21,5 +21,4 @@ Source code, data and figures for the MARL-enabled real-time control of urban dr
 - pyswmm >= 0.6.2
 - pystorms >= 1.0.0
 - swmm-api == 0.2.0.18
-- matplotlib
-- pandas
+- pymoo == 0.6.0
