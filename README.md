@@ -7,8 +7,8 @@ Source code, data and figures for the MARL-enabled real-time control of urban dr
     - Schütze, M.; Lange, M.; Pabst, M.; Haas, U. Astlingen—A benchmark for real time control (RTC). Water Sci. Technol. 2017, 2, 552–560. https://doi.org/10.2166/wst.2018.172
 
 2. **Chaohu**: A real-case model of a combined sewer system with 3 pump stations and forebays. Papers using this model:
-    - Liao, Z., Gu, X., Xie, J., Wang, X., & Chen, J. (2019). An integrated assessment of drainage system reconstruction based on a drainage networkmodel. Environmental Science and Pollution Research, 26(26), 26563–26576. https://www.researchgate.net/deref/https%3A%2F%2Fdoi.org%2F10.1007%2Fs11356-019-05280-1
-    - Zhi, G., Liao, Z., Tian, W., Wang, X., & Chen, J. (2019). A 3D dynamic visualization method coupled with an urban drainage model. Journal ofHydrology, 577, 123988. https://www.researchgate.net/deref/https%3A%2F%2Fdoi.org%2F10.1016%2Fj.jhydrol.2019.123988
+    - Liao, Z., Gu, X., Xie, J., Wang, X., & Chen, J. (2019). An integrated assessment of drainage system reconstruction based on a drainage networkmodel. Environmental Science and Pollution Research, 26(26), 26563–26576. https://doi.org/10.1007/s11356-019-05280-1
+    - Zhi, G., Liao, Z., Tian, W., Wang, X., & Chen, J. (2019). A 3D dynamic visualization method coupled with an urban drainage model. Journal ofHydrology, 577, 123988. https://doi.org/10.1016/j.jhydrol.2019.123988
     - Tian, W., Liao, Z., Zhi, G., Zhang, Z.&Wang, X., 2022b. Combined Sewer Overflow and Flooding Mitigation Through a Reliable Real-Time Control Based on Multi-Reinforcement Learning and Model Predictive Control. Water Resources Research, 58(7): e2021WR030703. https://doi.org/10.1029/2021WR030703
     - Tian, W., Liao, Z., Zhang, Z., Wu, H.&Xin, K., 2022a. Flooding and Overflow Mitigation Using Deep Reinforcement Learning Based on Koopman Operator of Urban Drainage Systems. Water Resources Research, 58(7): e2021WR030939. https://doi.org/10.1029/2021WR030939
 
