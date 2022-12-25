@@ -2,7 +2,7 @@
 Source code, data and figures for the MARL-enabled real-time control of urban drainage systems. The published article refer to [Towards coordinated and robust real-time control: a decentralized approach for combined sewer overflow and urban flooding reduction based on multi-agent reinforcement learning](https://authors.elsevier.com/c/1gI5s9pi-WQFd).
 
 ## UDS Environments
-1. **Astlingen**: A benchmark model of a combined sewer system with 6 storage tanks and 4 controllable outflow orifices. The SWMM model [Astlingen](https://github.com/open-toolbox/SWMM-Astlingen) is the case area. Thanks to Dr. Sun and other contributers for developing this model.
+1. **Astlingen**: A benchmark model of a combined sewer system with 6 storage tanks and 4 controllable outflow orifices. The SWMM model [Astlingen](https://github.com/open-toolbox/SWMM-Astlingen) is the case area. Thanks to Dr. Sun and other contributors for developing this model.
     - Sun C, Lorenz Svensen J, Borup M, Puig V, Cembrano G, Vezzaro L. An MPC-Enabled SWMM Implementation of the Astlingen RTC Benchmarking Network. Water. 2020; 12(4):1034. https://doi.org/10.3390/w12041034
     - Schütze, M.; Lange, M.; Pabst, M.; Haas, U. Astlingen—A benchmark for real time control (RTC). Water Sci. Technol. 2017, 2, 552–560. https://doi.org/10.2166/wst.2018.172
 
