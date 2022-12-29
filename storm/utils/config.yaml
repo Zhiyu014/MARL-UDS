@@ -348,7 +348,6 @@ astlingen:
 
   MPC:
     # Arguments for online search in the testing
-    test_events: 8 # testing events
     if_predict: False # if use the predictive algorithm
     algorithm: GA
     pop_size: 32

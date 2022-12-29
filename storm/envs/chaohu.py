@@ -346,17 +346,17 @@ class chaohu(scenario):
             inp['FILES']['USE HOTSTART'] = hsf_file
         
         # Set the Control Rules
-        inp['CONTROLS'] = Control.create_section()
-        for i in range(self.config['control_horizon']//self.config['control_interval']):
-            time = round(self.config['control_interval']/60*(i+1),2)
-            conditions = [Control._Condition('IF','SIMULATION','TIME', '<', str(time))]
-            actions = []
-            for idx,k in enumerate(self.config['action_space']):
-                logic = 'THEN' if idx == 0 else 'AND'
-                kind = self.env.methods['getlinktype'](k)
-                action = Control._Action(logic,kind,k,'SETTING','=',str('1.0'))
-                actions.append(action)
-            inp['CONTROLS'].add_obj(Control('P%s'%(i+1),conditions,actions,priority=5-i))
+        # inp['CONTROLS'] = Control.create_section()
+        # for i in range(self.config['control_horizon']//self.config['control_interval']):
+        #     time = round(self.config['control_interval']/60*(i+1),2)
+        #     conditions = [Control._Condition('IF','SIMULATION','TIME', '<', str(time))]
+        #     actions = []
+        #     for idx,k in enumerate(self.config['action_space']):
+        #         logic = 'THEN' if idx == 0 else 'AND'
+        #         kind = self.env.methods['getlinktype'](k)
+        #         action = Control._Action(logic,kind,k,'SETTING','=',str('1.0'))
+        #         actions.append(action)
+        #     inp['CONTROLS'].add_obj(Control('P%s'%(i+1),conditions,actions,priority=5-i))
     
 
         # Output the eval file
