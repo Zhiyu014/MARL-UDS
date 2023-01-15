@@ -18,7 +18,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
 
 
-def interact_steps(env,arg,event=None,train=True):
+def interact_steps(env,arg,event=None,train=True,on_policy=False):
     if type(arg) is Arguments:
         f = arg.agent_class(arg.observ_space,arg.action_shape,arg,act_only=True)
     else:
@@ -30,12 +30,16 @@ def interact_steps(env,arg,event=None,train=True):
     while not done:
         traj = [state]
         action = f.act(state,train)
+        action,log_probs = action if on_policy else action
         setting = f.convert_action_to_setting(action)
         done = env.step(setting,env.config['control_interval']*60)
         state = env.state()
         reward = env.reward(norm = True)
         rewards += reward
         traj += [action,reward,state,done]
+        if on_policy:
+            value = f.criticize(traj[0])
+            traj += [log_probs,value]
         trajs.append(traj)
     perf = env.performance('cumulative')
     
@@ -82,7 +86,7 @@ def efd_test(env,event=None):
 
 
 if __name__ == '__main__':
-    env = astlingen(initialize=False)
+    env = astlingen(config_file = './envs/config/astlingen_3act.yaml',initialize=False)
     hyps = yaml.load(open(os.path.join(HERE,'utils','config.yaml'), "r"), yaml.FullLoader)
     hyp = hyps[env.config['env_name']]
     hyp = hyp[hyp['train']]
@@ -126,13 +130,13 @@ if __name__ == '__main__':
             pool = mp.Pool(args.processes)
             res = []
             for event in train_events:
-                r = pool.apply_async(func=interact_steps,args=(env,args,event,True,))
+                r = pool.apply_async(func=interact_steps,args=(env,args,event,True,args.on_policy,))
                 res.append(r)
             pool.close()
             pool.join()
             res = [r.get() for r in res]
         else:
-            res = [interact_steps(env,ctrl,event)
+            res = [interact_steps(env,ctrl,event,train=True,on_policy=args.on_policy)
              for event in train_events]
         trajs,rewards,perfs = [[r[i] for r in res] for i in range(3)]
         trajs = reduce(lambda x,y:x+y, trajs)
@@ -157,12 +161,16 @@ if __name__ == '__main__':
             args.if_load = True
             ctrl.save()
 
+        # on-policy
+        if args.clear_memory:
+            memory.clear()
+
         # Evaluate the model in several episodes
         if args.episode % args.eval_gap == 0:
             perfs = []
             losses = []
             for idx,event in enumerate(eval_events):
-                trajs,_,perf = interact_steps(env,ctrl,event,train=False)
+                trajs,_,perf = interact_steps(env,ctrl,event,train=False,on_policy=args.on_policy)
                 loss = ctrl.evaluate_net(trajs)
                 perfs.append(perf)
                 losses.append(loss)
@@ -174,7 +182,8 @@ if __name__ == '__main__':
         # Save the current model
         if args.episode % args.save_gap == 0:
             ctrl.save()
-            memory.save()
+            if not args.clear_memory:
+                memory.save()
             log.save()
             # log.plot()
 
@@ -182,6 +191,7 @@ if __name__ == '__main__':
         ctrl.episode_update(*args.episode_update())
 
     ctrl.save()
-    memory.save()
+    if not args.clear_memory:
+        memory.save()
     log.save()
     log.plot()

@@ -44,7 +44,8 @@ class mpc_problem(Problem):
         idx = 0
         reward = 0
         while not done:
-            done = env.step([self.actions[i][act] for i,act in enumerate(y[idx])])
+            yi = y[idx] if idx < len(y) else y[-1]
+            done = env.step([self.actions[i][act] for i,act in enumerate(yi)])
             reward -= env.reward(norm=False)
             idx += 1
         return reward
@@ -135,11 +136,11 @@ if __name__ == '__main__':
     # init test args
     args = Arguments(env.get_args(), hyp_test)
     logger = args.init_test()
-    # logger.load(os.path.join(args.cwd,'%s.json'%args.test_name))
+    logger.load(os.path.join(args.cwd,'%s.json'%args.test_name))
 
     # generate rainfall
     test_event_dir = os.path.splitext(args.swmm_input)[0] + '_test.inp'
-    test_events = generate_split_file(args.swmm_input,filedir=test_event_dir,rain_num=args.test_events,rain_arg=args.rainfall)
+    test_events = generate_split_file(args.swmm_input,filedir=test_event_dir,rain_num=args.rainfall['test_events'],rain_arg=args.rainfall)
 
 
     cso_items = {ID:'creek' if weight == 2 else 'river' for ID,attr,weight in env.config['reward'] if attr == 'cumflooding'}
@@ -147,7 +148,8 @@ if __name__ == '__main__':
         inp = read_inp_file(event)
         start_time = datetime(inp.OPTIONS['START_DATE'].year,inp.OPTIONS['START_DATE'].month,inp.OPTIONS['START_DATE'].day,inp.OPTIONS['START_TIME'].hour,inp.OPTIONS['START_TIME'].minute)
         rain_name = start_time.strftime('%m/%d/%Y-%H')
-
+        if rain_name in logger.records:
+            continue
         # Use maxred settings as initial values of MPC
         # operat = pd.read_json(logger.records[rain_name]['operation']['MaxRed'])
         # settings = operat[list(args.action_space)].to_numpy().tolist()

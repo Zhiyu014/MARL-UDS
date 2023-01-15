@@ -9,7 +9,6 @@ from tensorflow import keras as ks
 from tensorflow import expand_dims,matmul
 from numpy import argmax,array,save,load
 from .qagent import QAgent
-from .qragent import QRAgent
 from os.path import join
 import random
 
@@ -25,13 +24,11 @@ class VDN:
 
         self.recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 2)
-        if self.recurrent:
-            self.seq_len = getattr(args,"seq_len",3)
-            self.agents = [QRAgent(action_shape[i],len(observ_space[i]),self.seq_len,args) 
-                           for i in range(self.n_agents)]       
-        else:
-            self.agents = [QAgent(action_shape[i],len(observ_space[i]),args)
-                           for i in range(self.n_agents)]
+
+        self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
+        self.agents = [QAgent(action_shape[i],len(observ_space[i]),args,self.seq_len)
+                    for i in range(self.n_agents)]
+                    
         self.observ_space = observ_space
         self.action_shape = action_shape
         self.action_table = getattr(args,'action_table',None)

@@ -12,18 +12,16 @@ from numpy import array
 from os.path import join
 
 class QAgent:
-    def __init__(self,action_shape,observ_size,args):
+    def __init__(self,action_shape,observ_size,args,seq_len=None):
         self.action_shape = action_shape
         self.observ_size = observ_size
+        self.recurrent = True if seq_len != None else False
+        self.seq_len = seq_len
 
         self.net_dim = getattr(args,"net_dim",128)
         self.num_layer = getattr(args, "num_layer", 3)
+        self.hidden_dim = getattr(args,"hidden_dim",self.net_dim)
         self.dueling = getattr(args,"if_dueling",True)
-
-        # deprecated
-        self.epsilon = getattr(args, "epsilon", 1)
-        self.epsilon_decay = getattr(args, "epsilon_decay", 0.999)
-        self.epsilon_min = getattr(args, "epsilon_min", 0.1)
 
         self.update_interval = getattr(args, "update_interval", 0.005)
 
@@ -33,10 +31,15 @@ class QAgent:
         self.model_dir = args.cwd
         
     def build_q_network(self):
-        input_layer = Input(shape=(self.observ_size,))
+        if self.recurrent:
+            input_layer = Input(shape=(self.seq_len,self.observ_size,))
+        else:
+            input_layer = Input(shape=(self.observ_size,))
         x = Dense(self.net_dim, activation='relu')(input_layer)
         for _ in range(self.num_layer-1):
             x = Dense(self.net_dim, activation='relu')(x)
+        if self.recurrent:
+            x = GRU(self.hidden_dim)(x)
         if self.dueling:
             x = Dense(self.action_shape+1,activation = 'linear')(x)
             output = Lambda(lambda i: K.expand_dims(i[:,0],-1)+i[:,1:] - K.mean(i[:,1:],keepdims = True),
@@ -51,8 +54,8 @@ class QAgent:
     def act(self,observ):
         # x = convert_to_tensor(observ)
         # x = expand_dims(x,0)
-        a = self.model(observ)[0].numpy().tolist()
-        return a
+        q = self.model(observ)[0].numpy().tolist()
+        return q
     
     def _hard_update_target_model(self):
         self.target_model.set_weights(self.model.get_weights())

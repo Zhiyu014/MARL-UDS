@@ -9,7 +9,6 @@ from tensorflow import keras as ks
 from tensorflow import expand_dims,matmul
 from numpy import argmax,array,save,load
 from .qagent import QAgent
-from .qragent import QRAgent
 from os.path import join
 import random
 class DQN:
@@ -30,11 +29,10 @@ class DQN:
         self.if_mac = getattr(args,'if_mac',False)            
         output_size = sum(self.action_shape) if self.if_mac else self.action_shape
         input_size = self.state_shape if self.if_mac else self.observ_space
-        if self.recurrent:
-            self.seq_len = getattr(args,"seq_len",3)
-            self.agent = QRAgent(output_size,input_size,self.seq_len,args) 
-        else:
-            self.agent = QAgent(output_size,input_size,args)
+
+        self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
+        self.agent = QAgent(output_size,input_size,args,self.seq_len) 
+        
         self.action_table = getattr(args,'action_table',None)
         self.state_norm = array([[i for _ in range(self.state_shape)] for i in range(2)])
         self.if_norm = getattr(args,'if_norm',False)
@@ -156,11 +154,6 @@ class DQN:
         targets = self._calculate_target(r,s_,d)
         
         loss = self._train_on_batch(s,a,targets)
-
-        if self.update_interval > 1:
-            self._hard_update_target_model()
-        else:
-            self._soft_update_target_model()
         return loss
 
 
