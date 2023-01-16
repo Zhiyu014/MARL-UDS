@@ -11,8 +11,8 @@ import numpy as np
 import os
 
 class RandomMemory():
-    def __init__(self,limit,cwd=None,load=False):
-        self.items = ['state','action','reward','next_state','done']
+    def __init__(self,limit,cwd=None,load=False,on_policy=False):
+        self.items = ['state','action','reward','next_state','done','log_probs','value'] if on_policy else ['state','action','reward','next_state','done']
         self.limit = limit
         self.cwd = cwd
         self.cur_capa = 0
@@ -28,9 +28,16 @@ class RandomMemory():
         return self.cur_capa
         # return len(self.experiences)
     
-    def sample(self, batch_size):
-        indices = random.sample(range(self.cur_capa),batch_size)
-        batch = [[getattr(self,item)[ind] for ind in indices] for item in self.items]
+    def sample(self, batch_size, continuous = False):
+        if continuous:
+            if self.cur_capa <= batch_size:
+                batch = [getattr(self,item) for item in self.items]
+            else:
+                ind = random.randint(0,self.cur_capa - batch_size)
+                batch = [[getattr(self,item)[i] for i in range(ind,ind+batch_size)] for item in self.items]
+        else:
+            indices = random.sample(range(self.cur_capa),batch_size)
+            batch = [[getattr(self,item)[ind] for ind in indices] for item in self.items]
         return batch
         
     def update(self, trajs):
@@ -46,6 +53,10 @@ class RandomMemory():
             np.save(os.path.join(cwd,'experience_%s.npy'%item),np.array(getattr(self,item)))
             print('Save experience %s'%item)
 
+    def clear(self):
+        for item in self.items:
+            setattr(self,item,deque(maxlen=self.limit))
+        self.cur_capa = 0
 
     def load(self,cwd=None):
         cwd = self.cwd if cwd is None else cwd

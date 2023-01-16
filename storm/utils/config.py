@@ -1,5 +1,5 @@
 from .logger import Trainlogger,Testlogger
-from agent import VDN,DQN,IQL,QMIX
+from agent import VDN,DQN,IQL,QMIX,A2C,PPO
 import os
 HERE = os.path.dirname(__file__)
 
@@ -17,12 +17,13 @@ class Arguments:
         self.agent_class = 'VDN'
         self.if_mac = True
         self.if_norm = False
-        self.if_double = True
+        self.if_double = False
         self.if_recurrent = False
+        self.on_policy = False
         self.seq_len = 3
         self.net_dim = 128
         self.num_layer = 3
-        self.if_dueling = True
+        self.if_dueling = False
         
         '''Argurments for exploration'''
         self.explore_events = 20
@@ -36,6 +37,7 @@ class Arguments:
 
 
         '''Argurments for training'''
+        self.clear_memory = False
         self.max_capacity = 250000
         self.batch_size = 256
         self.gamma = 0.97

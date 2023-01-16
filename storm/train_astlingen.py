@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     log = args.init_before_training()
 
-    memory = RandomMemory(args.max_capacity, args.cwd, args.if_load)
+    memory = RandomMemory(args.max_capacity, args.cwd, args.if_load, args.on_policy)
     ctrl = args.agent_class(args.observ_space,args.action_shape,args)
 
     events = pd.read_csv(args.rainfall['training_events'])
