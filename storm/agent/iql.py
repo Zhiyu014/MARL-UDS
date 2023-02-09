@@ -154,10 +154,10 @@ class IQL:
         loss = []
         for idx,agent in enumerate(self.agents):
             if self.double:
-                argmax_actions = ks.backend.argmax(agent.model(o_[idx]))
-                target_q_value = reduce_sum(agent.target_model(o_[idx])*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
+                argmax_actions = ks.backend.argmax(agent.forward(o_[idx]))
+                target_q_value = reduce_sum(agent.forward(o_[idx],target=True)*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
             else:
-                target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
+                target_q_value = reduce_max(agent.forward(o_[idx],target=True),axis=1)
             if self.global_reward:
                 target = r + self.gamma * target_q_value * (1-d)
             else:
@@ -166,7 +166,7 @@ class IQL:
             # los = self._train_on_agent(agent.model,o[idx],a[:,idx],target)
             with GradientTape() as tape:
                 tape.watch(o)
-                y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
+                y_pred = reduce_sum(agent.forward(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                 loss_value = self.loss_fn(target, y_pred)
             grads = tape.gradient(loss_value, agent.model.trainable_variables)
             self.optimizer.apply_gradients(zip(grads, agent.model.trainable_variables))
@@ -182,15 +182,15 @@ class IQL:
         loss = []
         for idx,agent in enumerate(self.agents):
             if self.double:
-                argmax_actions = ks.backend.argmax(agent.model(o_[idx]))
-                target_q_value = reduce_sum(agent.target_model(o_[idx])*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
+                argmax_actions = ks.backend.argmax(agent.forward(o_[idx]))
+                target_q_value = reduce_sum(agent.forward(o_[idx],target=True)*one_hot(argmax_actions,self.action_shape[idx]),axis=1)
             else:
-                target_q_value = reduce_max(agent.target_model(o_[idx]),axis=1)
+                target_q_value = reduce_max(agent.forward(o_[idx],target=True),axis=1)
             if self.global_reward:
                 target = r + self.gamma * target_q_value * (1-d)
             else:
                 target = r[:,idx] + self.gamma * target_q_value * (1-d)
-            y_pred = reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
+            y_pred = reduce_sum(agent.forward(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
             los = self.loss_fn(target, y_pred)
             loss.append(los.numpy())   
         return loss

@@ -2,7 +2,7 @@
 Source code, data and figures for the MARL-enabled real-time control of urban drainage systems. The published article refer to [Towards coordinated and robust real-time control: a decentralized approach for combined sewer overflow and urban flooding reduction based on multi-agent reinforcement learning](https://authors.elsevier.com/c/1gI5s9pi-WQFd).
 
 ## UDS Environments
-1. **Astlingen**: A benchmark model of a combined sewer system with 6 storage tanks and 4 controllable outflow orifices. The SWMM model [Astlingen](https://github.com/open-toolbox/SWMM-Astlingen) is the case area. Thanks to Dr. Sun and other contributors for developing this model.
+1. **Astlingen**: A benchmark SWMM model [Astlingen](https://github.com/open-toolbox/SWMM-Astlingen) of a combined sewer system with 6 storage tanks and 4 controllable outflow orifices. Thanks to Dr. Sun and other contributors for developing this model.
     - Sun C, Lorenz Svensen J, Borup M, Puig V, Cembrano G, Vezzaro L. An MPC-Enabled SWMM Implementation of the Astlingen RTC Benchmarking Network. Water. 2020; 12(4):1034. https://doi.org/10.3390/w12041034
     - Schütze, M.; Lange, M.; Pabst, M.; Haas, U. Astlingen—A benchmark for real time control (RTC). Water Sci. Technol. 2017, 2, 552–560. https://doi.org/10.2166/wst.2018.172
 
@@ -13,13 +13,19 @@ Source code, data and figures for the MARL-enabled real-time control of urban dr
     - Tian, W., Liao, Z., Zhang, Z., Wu, H.&Xin, K., 2022a. Flooding and Overflow Mitigation Using Deep Reinforcement Learning Based on Koopman Operator of Urban Drainage Systems. Water Resources Research, 58(7): e2021WR030939. https://doi.org/10.1029/2021WR030939
 
 ## Algorithms
-1. DQN (D3QN)
-2. IQL
-3. VDN
-4. QMIX
+1. DQN: Deep Q-learning (double & dueling network)
+2. IQL: [Independent Q-learning](https://arxiv.org/abs/1511.08779)
+3. VDN: [Value Decomposition Network](https://arxiv.org/abs/1706.05296)
+4. QMIX: [Monotonic Value Function Factorisation](https://arxiv.org/abs/2003.08839)
+5. A2C&MAA2C(demo): [advantage actor-critic](https://arxiv.org/abs/1602.01783)
+6. PPO&MAPPO(demo): 
+    - [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
+    - [MAPPO](https://arxiv.org/abs/2103.01955)
 
 ## Requirements:
 - tensorflow >= 2.3
+- tensorflow_probability >= 0.11.1
+- spektral == 1.2.0
 - pyswmm >= 0.6.2
 - pystorms >= 1.0.0
 - swmm-api == 0.2.0.18

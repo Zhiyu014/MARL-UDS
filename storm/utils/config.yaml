@@ -224,7 +224,7 @@ chaohu:
 
 # Environment name
 astlingen:
-  train: A2C
+  train: PPO
   # strategy
   VDN:
     # Arguments for the agent structure
@@ -270,6 +270,7 @@ astlingen:
     # Arguments for the agent structure
     agent_class: DQN # agent class
     if_mac: True # if is multi-agent
+    global_state: False # if use global state of all nodes
     if_norm: False # # if use normalized state
     if_double: True # if use double network
     if_recurrent: False # if use recurrent
@@ -350,6 +351,8 @@ astlingen:
     # Arguments for the agent structure
     agent_class: A2C # agent class
     if_mac: True # if is multi-agent
+    global_state: False # if use global state of all nodes
+    share_conv_layer: True # if share graph convolution layers
     if_norm: False # # if use normalized state
     if_recurrent: False # if use recurrent
     on_policy: True # if on-policy
@@ -391,13 +394,17 @@ astlingen:
   PPO:
     # Arguments for the agent structure
     agent_class: PPO # agent class
-    if_mac: True # if is multi-agent
+    if_mac: False # if is multi-agent
+    global_state: True # if use global state of all nodes
+    share_conv_layer: True # if share graph convolution layers
     if_norm: False # # if use normalized state
     if_recurrent: False # if use recurrent
     on_policy: True # if on-policy
     seq_len: 3 # recurrent sequence length
-    net_dim: 128 # dimension of hidden layers# dimension of hidden layers
+    net_dim: 128 # dimension of hidden layers
     num_layer: 3 # number of network layers
+    graph_channel: 64  # dimension of graph conv layers
+    num_conv_layer: 2 # number of graph conv layers
 
     # Arguments for the training
     clear_memory: True # if clear memory in each episode
@@ -430,7 +437,7 @@ astlingen:
     if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
-    processes: 5 # if use multiprocessing
+    processes: 1 # if use multiprocessing
 
   MPC:
     # Arguments for online search in the testing

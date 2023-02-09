@@ -17,6 +17,7 @@ from itertools import product
 import datetime
 from swmm_api import read_inp_file
 from swmm_api.input_file.sections import FilesSection,Control
+from swmm_api.input_file.section_lists import NODE_SECTIONS,LINK_SECTIONS
 
 HERE = os.path.dirname(__file__)
 
@@ -49,7 +50,7 @@ class chaohu(scenario):
 
     """
     
-    def __init__(self, config_file = None, swmm_file = None, initialize = True):
+    def __init__(self, config_file = None, swmm_file = None, global_state=False, initialize = True):
         # Network configuration
         config_file = os.path.join(HERE,"config","chaohu.yaml") \
             if config_file is None else config_file
@@ -67,6 +68,7 @@ class chaohu(scenario):
         self.penalty_weight = {ID: weight
                                for ID, _, weight in \
                                    self.config["performance_targets"]}
+        self.global_state = global_state # If use global state as input
 
         # initialize logger
         self.initialize_logger()
@@ -102,8 +104,22 @@ class chaohu(scenario):
             self.env.terminate()
         return done
 
+    def state_full(self):
+        __state = np.array([[self.data_log[attr][ID][-1]
+            if self.env._isFinished else self.env.methods[attr](ID)
+            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+
+        __last = np.array([[self.data_log[attr][ID][-2]
+            if attr not in ['depthN','rainfall'] and len(self.data_log[attr][ID]) > 1 else 0
+            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+        state = (__state - __last).T
+        return state
+
     def state(self):
         # Observe from the environment
+        if self.global_state:
+            state = self.state_full()
+            return state        
         if self.env._isFinished:
             __state = [self.data_log[attribute][ID][-1]
              for ID,attribute in self.config["states"]]
@@ -233,10 +249,17 @@ class chaohu(scenario):
                 self.data_log[attribute] = {}
             self.data_log[attribute][ID] = []
 
-        for ID, attribute in self.config["states"]:
-            if attribute not in self.data_log.keys():
-                self.data_log[attribute] = {}
-            self.data_log[attribute][ID] = []
+        if self.global_state:
+            for typ,attribute in self.config['global_state']:
+                if attribute not in self.data_log.keys():
+                    self.data_log[attribute] = {}
+                for ID in self.get_features(typ):
+                    self.data_log[attribute][ID] = []
+        else:
+            for ID, attribute in self.config["states"]:
+                if attribute not in self.data_log.keys():
+                    self.data_log[attribute] = {}
+                self.data_log[attribute][ID] = []
         
         for ID in self.config["action_space"]:
             self.data_log["setting"][ID] = []
@@ -283,8 +306,10 @@ class chaohu(scenario):
         args['rainfall_parameters'] = os.path.join(HERE,'config',config['rainfall_parameters']+'.yaml')
         # Control interval for step_advance
         args['control_interval'] = config['control_interval']
-        args['state_shape'] = len(config['states'])
-
+        args['state_shape'] = (len(self.get_features('nodes')),len(self.config['global_state'])) if self.global_state else len(args['states'])
+        if self.global_state:
+            args['edges'] = self.get_edge_list()
+            
         args['storage'] = ['CC-storage','JK-storage']
         args['outfall'] = [item[0] for item in config['performance_targets'] if item[1] == 'totalinflow']
 
@@ -317,6 +342,26 @@ class chaohu(scenario):
         args['action_table'] = self.get_action_table(if_mac)
         return args
 
+
+    # getters
+    def get_features(self,kind='nodes'):
+        inp = read_inp_file(self.config['swmm_input'])
+        labels = {'nodes':NODE_SECTIONS,'links':LINK_SECTIONS}
+        features = []
+        for label in labels[kind]:
+            if label in inp:
+                features += list(getattr(inp,label))            
+        return features
+    
+    def get_edge_list(self):
+        inp = read_inp_file(self.config['swmm_input'])
+        nodes = self.get_features('nodes')
+        edges = []
+        for label in LINK_SECTIONS:
+            if label in inp:
+                edges += [(nodes.index(link.FromNode),nodes.index(link.ToNode))
+                 for link in getattr(inp,label).values()]
+        return np.array(edges)
 
     def save_hotstart(self,hsf_file=None):
         # Save the current state in a .hsf file.

@@ -31,7 +31,8 @@ def interact_steps(env,arg,event=None,train=True,base=None,on_policy=False):
     while not done:
         traj = [state]
         action = f.act(state,train)
-        action,log_probs = action if on_policy else action
+        if on_policy:
+            action,log_probs = action
         setting = f.convert_action_to_setting(action)
         done = env.step(setting,env.config['control_interval']*60)
         state = env.state()
@@ -81,6 +82,8 @@ if __name__ == '__main__':
     hyp = hyps[env.config['env_name']]
     hyp = hyp[hyp['train']]
 
+    if 'global_state' in hyp:
+        env.global_state = hyp['global_state']
     env_args = env.get_args(if_mac=hyp['if_mac'])
     args = Arguments(env_args,hyp=hyp)
 
@@ -112,10 +115,6 @@ if __name__ == '__main__':
     else:
        hc_trains = [hc_test(env,event) for event in train_events]
        hc_evals = [hc_test(env,event) for event in eval_events]
-
-    #print('HC tests complete')
-    # ini_n = getattr(args,'ini_episodes',0)
-    # for n in range(ini_n, args.total_episodes + args.pre_episodes):
 
     while args.episode <= args.total_episodes + args.pre_episodes:
         # Sampling TODO: Parallel Problems in Linux

@@ -215,7 +215,7 @@ class QMIX:
 
         with GradientTape() as tape:
             tape.watch(o)
-            q_values = [reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
+            q_values = [reduce_sum(agent.forward(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                     for idx,agent in enumerate(self.agents)]
             q_values = transpose(convert_to_tensor(q_values))
             q_tot = self.model.call([q_values,s]) 
@@ -228,11 +228,11 @@ class QMIX:
     def _calculate_target(self,r,s_,o_,d):
 
         if self.double:
-            target_q_values = [reduce_sum(agent.target_model(o_[idx])*\
-                one_hot(ks.backend.argmax(agent.model(o_[idx])),self.action_shape[idx]),axis=1)
+            target_q_values = [reduce_sum(agent.forward(o_[idx],target=True)*\
+                one_hot(ks.backend.argmax(agent.forward(o_[idx])),self.action_shape[idx]),axis=1)
             for idx,agent in enumerate(self.agents)]
         else:
-            target_q_values = [reduce_max(agent.target_model(o_[idx]),axis=1)
+            target_q_values = [reduce_max(agent.forward(o_[idx],target=True),axis=1)
                     for idx,agent in enumerate(self.agents)]
 
         target_q_values = transpose(convert_to_tensor(target_q_values))
@@ -250,7 +250,7 @@ class QMIX:
         
         targets = self._calculate_target(r,s_,o_,d)
         
-        q_values = [reduce_sum(agent.model(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
+        q_values = [reduce_sum(agent.forward(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                     for idx,agent in enumerate(self.agents)]
         q_values = transpose(convert_to_tensor(q_values))
         q_tot = self.target_model.call([q_values,s])

@@ -16,6 +16,8 @@ class Arguments:
         '''Arguments for agents'''
         self.agent_class = 'VDN'
         self.if_mac = True
+        self.global_state = False
+        self.share_conv_layer = False
         self.if_norm = False
         self.if_double = False
         self.if_recurrent = False
@@ -46,12 +48,6 @@ class Arguments:
         self.repeat_times = 2
         self.loss_function = 'MeanSquaredError'
         self.optimizer = 'Adam'
-
-
-        '''Arguments for device'''  # TODO
-        self.thread_num = 8     # cpu_num
-        self.random_seed = 42   # initialize random seed in self.init_before_training()
-        self.learner_gpus = 0   # `int` means the ID of single GPU, -1 means CPU
 
         '''Arguments for evaluate'''
         self.eval_events = 1
@@ -117,9 +113,12 @@ class Arguments:
 
     def episode_update(self):
         self.episode += 1
-        if self.episode >= self.pre_episodes:
-            self.epsilon = max(self.epsilon*self.epsilon_decay,self.epsilon_min)
-        return self.episode,self.epsilon
+        if self.on_policy:
+            return self.episode,
+        else:
+            if self.episode >= self.pre_episodes:
+                self.epsilon = max(self.epsilon*self.epsilon_decay,self.epsilon_min)
+            return self.episode,self.epsilon
 
     def init_before_testing(self,item=None):
         self.agent_class = eval(self.agent_class)

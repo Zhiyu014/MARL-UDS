@@ -25,8 +25,15 @@ class PPO:
         self.if_mac = getattr(args,'if_mac',False)            
 
         self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
-        self.critic = QAgent(1,self.state_shape,args,self.seq_len) 
-        self.actor = [Actor(self.action_shape[i],len(self.observ_space[i]),args,self.seq_len) for i in range(self.n_agents)] if self.if_mac else Actor(action_shape,observ_space,args,self.seq_len)
+        self.graph_conv = getattr(args,"global_state",False)
+        self.share_conv_layer = getattr(args,"share_conv_layer",False)
+        self.critic = QAgent(1,self.state_shape,args,self.seq_len,self.graph_conv) 
+        if self.if_mac:
+            self.actor = [Actor(self.action_shape[i],len(self.observ_space[i]),args,self.seq_len) 
+            for i in range(self.n_agents)]
+        else:
+            graph_conv = self.critic.conv_layer if self.graph_conv and self.share_conv_layer else self.graph_conv
+            self.actor = Actor(action_shape,observ_space,args,self.seq_len,graph_conv)
 
         self.action_table = getattr(args,'action_table',None)
 
@@ -56,13 +63,6 @@ class PPO:
 
 
     def act(self,state,train=True):
-        # if train:
-        #     # Get random action
-        #     if self.if_mac:
-        #         action = [random.randint(0,shape-1) for shape in self.action_shape]
-        #     else:
-        #         action = (random.randint(0,self.action_shape-1),)
-        # else:
         if self.recurrent:
             state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
                 if len(state)<self.seq_len else state
@@ -103,7 +103,7 @@ class PPO:
                 if len(state)<self.seq_len else state
         # Get action and logp
         state = expand_dims(convert_to_tensor(state),0)
-        value = squeeze(self.critic.model(state))
+        value = squeeze(self.critic.forward(state))
         return value
         
     def convert_action_to_setting(self,action):
@@ -173,7 +173,7 @@ class PPO:
         # returns = self.discounted_cumsum(r,self.gamma)
         returns = advs + value
 
-        y_preds = squeeze(self.critic.model(s))
+        y_preds = squeeze(self.critic.forward(s))
         value_loss = self.loss_fn(y_preds, returns)
 
         min_adv = tf.where(
@@ -200,7 +200,7 @@ class PPO:
     def critic_update(self,s, returns):
         with GradientTape() as tape:
             tape.watch(s)
-            y_preds = squeeze(self.critic.model(s))
+            y_preds = squeeze(self.critic.forward(s))
             value_loss = self.loss_fn(y_preds, returns)
         grads = tape.gradient(value_loss, self.critic.model.trainable_variables)
         self.cri_optimizer.apply_gradients(zip(grads, self.critic.model.trainable_variables))

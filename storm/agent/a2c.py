@@ -25,8 +25,15 @@ class A2C:
 
 
         self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
-        self.critic = QAgent(1,self.state_shape,args,self.seq_len) 
-        self.actor = [Actor(self.action_shape[i],len(self.observ_space[i]),args,self.seq_len) for i in range(self.n_agents)] if self.if_mac else Actor(action_shape,observ_space,args,self.seq_len)
+        self.graph_conv = getattr(args,"global_state",False)
+        self.share_conv_layer = getattr(args,"share_conv_layer",False)
+        self.critic = QAgent(1,self.state_shape,args,self.seq_len,self.graph_conv) 
+        if self.if_mac:
+            self.actor = [Actor(self.action_shape[i],len(self.observ_space[i]),args,self.seq_len) 
+            for i in range(self.n_agents)]
+        else:
+            graph_conv = self.critic.conv_layer if self.graph_conv and self.share_conv_layer else self.graph_conv
+            self.actor = Actor(action_shape,observ_space,args,self.seq_len,graph_conv)
 
         self.action_table = getattr(args,'action_table',None)
 
@@ -98,7 +105,7 @@ class A2C:
                 if len(state)<self.seq_len else state
         # Get action and logp
         state = expand_dims(convert_to_tensor(state),0)
-        value = squeeze(self.critic.model(state))
+        value = squeeze(self.critic.forward(state))
         return value
 
     def convert_action_to_setting(self,action):
@@ -143,8 +150,8 @@ class A2C:
         s,r,s_,d = [convert_to_tensor(i,dtype=float32) for i in [s,r,s_,d]]
         a = convert_to_tensor(a)
 
-        target_value = r + self.gamma * (1-d) * squeeze(self.critic.target_model(s_))
-        y_pred = squeeze(self.critic.model(s))
+        target_value = r + self.gamma * (1-d) * squeeze(self.critic.forward(s_,target=True))
+        y_pred = squeeze(self.critic.forward(s))
         value_loss = self.cri_loss_fn(y_pred, target_value)
         
         advantage = target_value - y_pred
@@ -159,8 +166,8 @@ class A2C:
     def critic_update(self,s, r, s_, d):
         with GradientTape() as tape:
             tape.watch(s)
-            y_preds = squeeze(self.critic.model(s))
-            target_value = r + self.gamma * (1-d) * squeeze(self.critic.target_model(s_))
+            y_preds = squeeze(self.critic.forward(s))
+            target_value = r + self.gamma * (1-d) * squeeze(self.critic.forward(s_,target=True))
             value_loss = self.cri_loss_fn(y_preds, target_value)
         grads = tape.gradient(value_loss, self.critic.model.trainable_variables)
         self.cri_optimizer.apply_gradients(zip(grads, self.critic.model.trainable_variables))
@@ -181,8 +188,8 @@ class A2C:
         return policy_loss
 
     def get_advantages(self,s,r,s_,d):
-        target_value = r + self.gamma * (1-d) * squeeze(self.critic.target_model(s_))
-        advantage = target_value - squeeze(self.critic.model(s))
+        target_value = r + self.gamma * (1-d) * squeeze(self.critic.forward(s_,target=True))
+        advantage = target_value - squeeze(self.critic.forward(s))
         return advantage
 
     def episode_update(self,episode):

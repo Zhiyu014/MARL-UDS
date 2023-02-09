@@ -31,7 +31,8 @@ class DQN:
         input_size = self.state_shape if self.if_mac else self.observ_space
 
         self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
-        self.agent = QAgent(output_size,input_size,args,self.seq_len) 
+        self.graph_conv = getattr(args,"global_state",False)
+        self.agent = QAgent(output_size,input_size,args,self.seq_len,self.graph_conv) 
         
         self.action_table = getattr(args,'action_table',None)
         self.state_norm = array([[i for _ in range(self.state_shape)] for i in range(2)])
@@ -161,7 +162,7 @@ class DQN:
         
         with GradientTape() as tape:
             tape.watch(s)
-            y_preds = self.agent.model(s)
+            y_preds = self.agent.forward(s)
             if self.if_mac:
                 y_preds = [reduce_sum(y_preds[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]*one_hot(a[:,i],shape),axis=1) for i,shape in enumerate(self.action_shape)]
                 y_preds = reduce_sum(convert_to_tensor(y_preds),axis=0)
@@ -175,15 +176,15 @@ class DQN:
     def _calculate_target(self,r,s_,d):
         if self.double:
             if self.if_mac:
-                argmax_actions = [ks.backend.argmax(self.agent.model(s_)[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]) for i,shape in enumerate(self.action_shape)]
-                target_q_values = self.agent.target_model(s_)
+                argmax_actions = [ks.backend.argmax(self.agent.forward(s_)[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]) for i,shape in enumerate(self.action_shape)]
+                target_q_values = self.agent.forward(s_,target=True)
                 target_q_values = [reduce_sum(target_q_values[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]*one_hot(argmax_actions[i],shape),axis=1) for i,shape in enumerate(self.action_shape)]
                 target_q_values = reduce_sum(convert_to_tensor(target_q_values),axis=0)
             else:
-                argmax_actions = ks.backend.argmax(self.agent.model(s_))
-                target_q_values = reduce_sum(self.agent.target_model(s_)*one_hot(argmax_actions,self.action_shape),axis=1)
+                argmax_actions = ks.backend.argmax(self.agent.forward(s_))
+                target_q_values = reduce_sum(self.agent.forward(s_,target=True)*one_hot(argmax_actions,self.action_shape),axis=1)
         else:
-            target_q_values = reduce_max(self.agent.target_model(s_),axis=1) 
+            target_q_values = reduce_max(self.agent.forward(s_,target=True),axis=1) 
         discounted_reward_batch = self.gamma * target_q_values
         targets = r + discounted_reward_batch * (1-d)
         return targets
@@ -196,7 +197,7 @@ class DQN:
             a = squeeze(a)
         targets = self._calculate_target(r,s_,d)
         
-        y_preds = self.agent.model(s)
+        y_preds = self.agent.forward(s)
         if self.if_mac:
             y_preds = [reduce_sum(y_preds[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]*one_hot(a[:,i],shape),axis=1) for i,shape in enumerate(self.action_shape)]
             y_preds = reduce_sum(convert_to_tensor(y_preds),axis=0)

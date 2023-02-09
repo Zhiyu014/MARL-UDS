@@ -5,6 +5,7 @@ import yaml
 import numpy as np
 from swmm_api import read_inp_file
 from swmm_api.input_file.sections import FilesSection,Control
+from swmm_api.input_file.section_lists import NODE_SECTIONS,LINK_SECTIONS
 import datetime
 from functools import reduce
 from itertools import product
@@ -41,7 +42,7 @@ class astlingen(scenario):
 
     """
 
-    def __init__(self, config_file=None, swmm_file=None, if_predict=False,initialize = True):
+    def __init__(self, config_file=None, swmm_file=None, global_state=False,initialize = True):
         # Network configuration
         config_file = os.path.join(HERE,"config","astlingen.yaml") \
             if config_file is None else config_file
@@ -56,7 +57,7 @@ class astlingen(scenario):
         self.penalty_weight = {ID: weight
                                for ID, _, weight in \
                                    self.config["performance_targets"]}
-        self.if_predict = if_predict # Not sure yet
+        self.global_state = global_state # If use global state as input
 
         # initialize logger
         self.initialize_logger()
@@ -95,21 +96,34 @@ class astlingen(scenario):
             self.env.terminate()
         return done
 
+    def state_full(self):
+        __state = np.array([[self.data_log[attr][ID][-1]
+            if self.env._isFinished else self.env.methods[attr](ID)
+            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+
+        __last = np.array([[self.data_log[attr][ID][-2]
+            if attr not in ['depthN','rainfall'] and len(self.data_log[attr][ID]) > 1 else 0
+            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+        state = (__state - __last).T
+        return state
+
     def state(self, seq = False):
         # Observe from the environment
+        if self.global_state:
+            state = self.state_full()
+            return state
         if self.env._isFinished:
             # if seq:
             #     __state = [list(self.data_log[attribute][ID])[-seq:]
             #     for ID,attribute in self.config["states"]]
             # else:
-                __state = [self.data_log[attribute][ID][-1]
-                for ID,attribute in self.config["states"]]
+            __state = [self.data_log[attribute][ID][-1]
+            for ID,attribute in self.config["states"]]
         else:
             __state = self.env._state()
             # if seq:
             #     __state = [list(self.data_log[attribute][ID])[-seq:-1] + [__state[idx]]
-            #     for idx,(ID,attribute) in enumerate(self.config["states"])]
-                    
+            #     for idx,(ID,attribute) in enumerate(self.config["states"])]  
         state = []
         for idx,(ID,attribute) in enumerate(self.config["states"]):
             if attribute in ['depthN','rainfall']:
@@ -191,10 +205,17 @@ class astlingen(scenario):
                 self.data_log[attribute] = {}
             self.data_log[attribute][ID] = deque(maxlen=maxlen)
             
-        for ID, attribute in config["states"]:
-            if attribute not in self.data_log.keys():
-                self.data_log[attribute] = {}
-            self.data_log[attribute][ID] = deque(maxlen=maxlen)
+        if self.global_state:
+            for typ,attribute in config['global_state']:
+                if attribute not in self.data_log.keys():
+                    self.data_log[attribute] = {}
+                for ID in self.get_features(typ):
+                    self.data_log[attribute][ID] = deque(maxlen=maxlen)
+        else:
+            for ID, attribute in config["states"]:
+                if attribute not in self.data_log.keys():
+                    self.data_log[attribute] = {}
+                self.data_log[attribute][ID] = deque(maxlen=maxlen)
 
         for ID in config["action_space"].keys():
             self.data_log["setting"][ID] = deque(maxlen=maxlen)
@@ -203,38 +224,9 @@ class astlingen(scenario):
             if attribute not in self.data_log.keys():
                 self.data_log[attribute] = {}
             self.data_log[attribute][ID] = deque(maxlen=maxlen)
-        # if self.if_predict:
-        #     self.data_log.update({"hotstart_file": [],
-        #     "evaluation_file": []})
-
-    # def _convert_actions(self,actions):
-    #     if actions is not None:
-    #         if type(actions) == list or type(actions) == np.ndarray:
-    #             if {type(a) for a in actions} == {int}:
-    #                 actions = [options[actions[idx]]
-    #                 for idx,options in enumerate(self.config['action_space'].values())]
-    #         elif type(actions) == dict and {type(v) for v in actions.values()} == {int}:
-    #             actions = [self.config['action_space'][k][v]
-    #             for k,v in actions.items()]
-    #     return actions
 
     def _logger(self):
         super()._logger()
-        # for attribute in self.data_log.keys():
-        #     if attribute not in ["performance_measure", "simulation_time",
-        #     "hotstart_file", "evaluation_file"]:
-        #         for element in self.data_log[attribute].keys():
-        #             self.data_log[attribute][element].append(
-        #                 self.env.methods[attribute](element)
-        #             )
-        # self.data_log["simulation_time"].append(self.env.methods['simulation_time']())
-
-        # if self.if_predict:
-        #     hsf_file = self.save_hotstart()
-        #     eval_file = self.create_eval_file(hsf_file)
-        #     self.data_log["hotstart_file"].append(hsf_file)
-        #     self.data_log["evaluation_file"].append(eval_file)
-
 
 
     def get_action_table(self,if_mac):
@@ -260,8 +252,10 @@ class astlingen(scenario):
         if not os.path.isfile(args['rainfall']['training_events']):
             args['rainfall']['training_events'] = os.path.join(HERE,'config',args['rainfall']['training_events']+'.csv')
 
-        # Control interval for step_advance
-        args['state_shape'] = len(args['states'])
+        # state shape
+        args['state_shape'] = (len(self.get_features('nodes')),len(self.config['global_state'])) if self.global_state else len(args['states'])
+        if self.global_state:
+            args['edges'] = self.get_edge_list()
         if if_mac:
             # multi-agent controller structure
             args["n_agents"] = len(args['site'])
@@ -282,6 +276,27 @@ class astlingen(scenario):
             args['action_shape'] = reduce(lambda x,y:x*y,actions)
         args['action_table'] = self.get_action_table(if_mac)
         return args
+
+
+    # getters
+    def get_features(self,kind='nodes'):
+        inp = read_inp_file(self.config['swmm_input'])
+        labels = {'nodes':NODE_SECTIONS,'links':LINK_SECTIONS}
+        features = []
+        for label in labels[kind]:
+            if label in inp:
+                features += list(getattr(inp,label))            
+        return features
+    
+    def get_edge_list(self):
+        inp = read_inp_file(self.config['swmm_input'])
+        nodes = self.get_features('nodes')
+        edges = []
+        for label in LINK_SECTIONS:
+            if label in inp:
+                edges += [(nodes.index(link.FromNode),nodes.index(link.ToNode))
+                 for link in getattr(inp,label).values()]
+        return np.array(edges)
 
     # predictive functions
     def save_hotstart(self,hsf_file=None):

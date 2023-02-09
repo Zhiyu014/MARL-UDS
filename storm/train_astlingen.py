@@ -30,7 +30,8 @@ def interact_steps(env,arg,event=None,train=True,on_policy=False):
     while not done:
         traj = [state]
         action = f.act(state,train)
-        action,log_probs = action if on_policy else action
+        if on_policy:
+            action,log_probs = action
         setting = f.convert_action_to_setting(action)
         done = env.step(setting,env.config['control_interval']*60)
         state = env.state()
@@ -86,12 +87,14 @@ def efd_test(env,event=None):
 
 
 if __name__ == '__main__':
-    env = astlingen(config_file = './envs/config/astlingen_3act.yaml',initialize=False)
+    env = astlingen(config_file = './envs/config/astlingen.yaml',initialize=False)
     hyps = yaml.load(open(os.path.join(HERE,'utils','config.yaml'), "r"), yaml.FullLoader)
     hyp = hyps[env.config['env_name']]
     hyp = hyp[hyp['train']]
-
-    env_args = env.get_args(if_mac=hyp['if_mac'])
+    
+    if 'global_state' in hyp:
+        env.global_state = hyp['global_state']
+    env_args = env.get_args(hyp['if_mac'])
     args = Arguments(env_args,hyp=hyp)
 
     log = args.init_before_training()
@@ -119,11 +122,9 @@ if __name__ == '__main__':
        bc_trains = [bc_test(env,event) for event in train_events]
        bc_evals = [bc_test(env,event) for event in eval_events]
 
-
     # efd_trains = [efd_test(env,event) for event in train_events]
     # efd_evals = [efd_test(env,event) for event in eval_events]
 
-    ini_n = getattr(args,'ini_episodes',0)
     while args.episode <= args.total_episodes + args.pre_episodes:
         # Sampling
         if args.processes > 1:

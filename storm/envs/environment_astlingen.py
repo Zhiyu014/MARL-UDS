@@ -14,6 +14,7 @@ class env_ast(env_base):
         # for state and performance
         self.methods.update({'cumflooding':self._getCumFlooding,
                              'totalinflow':self._getNodeTotalInflow,
+                             'lateral_infow_vol':self._getNodeLateralinflowVol,
                              'rainfall':self._getGageRainfall,
                              'getlinktype':self._getLinkType,
                              'setting':self._getLinkSetting})
@@ -34,6 +35,9 @@ class env_ast(env_base):
         else:
             return self.sim._model.node_inflow(ID)
 
+    def _getNodeLateralinflowVol(self,ID):
+        # Cumulative lateral inflow volume
+        return self.sim._model.node_statistics(ID)['lateral_infow_vol']
 
     def _getGageRainfall(self,ID):
         # For Cumrainfall state
