@@ -278,6 +278,8 @@ astlingen:
     net_dim: 256 # dimension of hidden layers# dimension of hidden layers
     num_layer: 3 # number of network layers
     if_dueling: True # if use dueling layer
+    graph_channel: 64  # dimension of graph conv layers
+    num_conv_layer: 2 # number of graph conv layers
 
     # Arguments for the training
     max_capacity: 1048576 # 2 ** 20 maximum capacity for the replay buffer
@@ -342,6 +344,46 @@ astlingen:
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
     cwd: ./model/astlingen_IQL # the working directory
+    if_remove: False # if remove the cwd or keep it
+    if_load: False # if load the current model
+    replace_rain: False # if replace the rainfall events
+    processes: 5 # if use multiprocessing
+
+  QMIX:
+    # Arguments for the agent structure
+    agent_class: QMIX # agent class
+    if_mac: True # if is multi-agent
+    if_norm: False # if use normalized state
+    if_double: True # if use double network
+    if_recurrent: False # if use recurrent
+    seq_len: 3 # recurrent sequence length
+    net_dim: 128 # dimension of hidden layers# dimension of hidden layers
+    num_layer: 3 # number of network layers
+    if_dueling: True # if use dueling layer
+
+    # Arguments for the training
+    max_capacity: 1048576 # 2 ** 20 maximum capacity for the replay buffer
+    batch_size: 512 # batch size of the training data
+    gamma: 0.98 # discouted rate
+    learning_rate: 0.001 # learning rate
+    update_interval: 0.05 # update tau for target network
+    repeat_times: 2 # repeatedly update network using ReplayBuffer
+    loss_function: MeanSquaredError # loss function
+    optimizer: Adam # optimizer 
+
+    # Arguments for the exploration
+    total_episodes: 5000 # training steps
+    pre_episodes: 0 # pre-sampling steps
+    ini_episodes: 0 # initial episodes n
+    explore_events: 50 # exploration events
+    epsilon_decay: 0.999 # epsilon-greedy noise
+    epsilon_min: 0.1 # minimum epsilon-greedy noise
+
+    # Arguments for the evaluation
+    eval_events: 1 # evaluation events
+    eval_gap: 10 # evaluate the agent per eval_gap
+    save_gap: 100 # save the agent & state_norm per save_gap
+    cwd: ./model/astlingen_QMIX # the working directory
     if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events

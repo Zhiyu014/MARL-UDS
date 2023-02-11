@@ -74,6 +74,17 @@ states:
     - "J17"
     - depthN
   
+# global state definitions
+global_state:
+  - !!python/tuple
+    - nodes
+    - depthN
+  - !!python/tuple
+    - nodes
+    - totalinflow
+  - !!python/tuple
+    - nodes
+    - lateral_infow_vol
 
 # Action space
 action_space:
