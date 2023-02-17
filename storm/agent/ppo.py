@@ -23,6 +23,7 @@ class PPO:
         self.observ_space = observ_space
         self.action_shape = action_shape
         self.if_mac = getattr(args,'if_mac',False)            
+        self.if_norm = getattr(args,'if_norm',False)
 
         self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
         self.graph_conv = getattr(args,"global_state",False)
@@ -153,7 +154,7 @@ class PPO:
             self.target_update_func()
             value_losses.append(value_loss)
             policy_losses.append(policy_loss)
-        return value_losses,policy_losses
+        return policy_losses
 
     def evaluate_net(self,trajs):
         s, a, r, s_, d, log_probs, value = [[traj[i] for traj in trajs] for i in range(7)]
@@ -194,7 +195,7 @@ class PPO:
             ratio = tf.exp(new_log_probs - log_probs)
             policy_loss = - reduce_mean(tf.minimum(ratio * advs, min_adv))
             policy_loss -= reduce_mean(entropy) * self.lambda_entropy # entropy loss
-        return value_loss,policy_loss
+        return policy_loss
 
 
     def critic_update(self,s, returns):
@@ -204,12 +205,13 @@ class PPO:
             value_loss = self.loss_fn(y_preds, returns)
         grads = tape.gradient(value_loss, self.critic.model.trainable_variables)
         self.cri_optimizer.apply_gradients(zip(grads, self.critic.model.trainable_variables))
-        return value_loss
+        return value_loss.numpy()
 
     def actor_update(self,s, a, log_probs, advs,i=None):
         actor = self.actor[i] if self.if_mac else self.actor
         variables = actor.model.trainable_variables
         with GradientTape() as tape:
+            tape.watch(s)
             new_log_probs,entropy = actor.get_action_entropy(s,a)
             ratio = tf.exp(new_log_probs - log_probs)
             min_adv = tf.where(
@@ -221,7 +223,7 @@ class PPO:
             policy_loss -= reduce_mean(entropy) * self.lambda_entropy # entropy loss
         grads = tape.gradient(policy_loss, variables)
         self.act_optimizer.apply_gradients(zip(grads, variables))
-        return policy_loss
+        return policy_loss.numpy()
 
     def episode_update(self,episode):
         self.episode = episode
@@ -236,7 +238,7 @@ class PPO:
 
     def save(self,model_dir=None,norm=False,agents=True):
         # Save the state normalization paras
-        if norm:
+        if norm and self.if_norm:
             if model_dir is None:
                 save(join(self.model_dir,'state_norm.npy'),self.state_norm)
             else:
@@ -253,7 +255,7 @@ class PPO:
 
     def load(self,model_dir=None,norm=False,agents=True):
         # Load the state normalization paras
-        if norm:
+        if norm and self.if_norm:
             if model_dir is None:
                 self.state_norm = load(join(self.model_dir,'state_norm.npy'))
             else:

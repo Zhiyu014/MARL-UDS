@@ -32,8 +32,9 @@ class VDN:
         self.observ_space = observ_space
         self.action_shape = action_shape
         self.action_table = getattr(args,'action_table',None)
-        self.state_norm = array([[i for _ in range(args.state_shape)] for i in range(2)])
         self.if_norm = getattr(args,'if_norm',False)
+        if self.if_norm:
+            self.state_norm = array([[i for _ in range(args.state_shape)] for i in range(2)])
         self.epsilon = getattr(args,'epsilon',1)
 
         if not act_only:
@@ -94,7 +95,8 @@ class VDN:
 
     def update_net(self,memory,batch_size=None):
         # Update the state & reward normalization paras
-        self.state_norm = memory.get_state_norm()
+        if self.if_norm:
+            self.state_norm = memory.get_state_norm()
         # self.reward_norm = memory.get_reward_norm()
 
         batch_size = self.batch_size if batch_size is None else batch_size
@@ -214,7 +216,7 @@ class VDN:
 
     def save(self,model_dir=None,norm=True,agents=True):
         # Save the state normalization paras
-        if norm:
+        if norm and self.if_norm:
             if model_dir is None:
                 save(join(self.model_dir,'state_norm.npy'),self.state_norm)
             else:
@@ -227,7 +229,7 @@ class VDN:
             
     def load(self,model_dir=None,norm=True,agents=True):
         # Load the state normalization paras
-        if norm:
+        if norm and self.if_norm:
             if model_dir is None:
                 self.state_norm = load(join(self.model_dir,'state_norm.npy'))
             else:

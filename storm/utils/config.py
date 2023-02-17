@@ -1,5 +1,5 @@
 from .logger import Trainlogger,Testlogger
-from agent import VDN,DQN,IQL,QMIX,A2C,PPO
+from agent import *
 import os
 HERE = os.path.dirname(__file__)
 
@@ -121,7 +121,8 @@ class Arguments:
             return self.episode,self.epsilon
 
     def init_before_testing(self,item=None):
-        self.agent_class = eval(self.agent_class)
+        if type(self.agent_class) is str:
+            self.agent_class = eval(self.agent_class)
         self.if_load = True
         self.if_remove = False
         if self.cwd is None:

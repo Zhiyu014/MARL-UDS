@@ -79,8 +79,9 @@ class QMIX:
         self.action_shape = action_shape
         self.action_table = getattr(args,'action_table',None)
         self.state_shape = getattr(args,'state_shape')
-        self.state_norm = array([[i for _ in range(self.state_shape)] for i in range(2)])
         self.if_norm = getattr(args,'if_norm',False)
+        if self.if_norm:
+            self.state_norm = array([[i for _ in range(self.state_shape)] for i in range(2)])
         self.epsilon = getattr(args,'epsilon',1)
 
 
@@ -153,7 +154,8 @@ class QMIX:
 
     def update_net(self,memory,batch_size=None):
         # Update the state & reward normalization paras
-        self.state_norm = memory.get_state_norm()
+        if self.if_norm:
+            self.state_norm = memory.get_state_norm()
         # self.reward_norm = memory.get_reward_norm()
 
         batch_size = self.batch_size if batch_size is None else batch_size
@@ -279,7 +281,7 @@ class QMIX:
         model_dir = self.model_dir if model_dir is None else model_dir
 
         # Save the state normalization paras
-        if norm:
+        if norm and self.if_norm:
             save(join(model_dir,'state_norm.npy'),self.state_norm)
 
         # Save the agent paras
@@ -292,7 +294,7 @@ class QMIX:
     def load(self,model_dir=None,norm=True,agents=True):
         model_dir = self.model_dir if model_dir is None else model_dir
         # Load the state normalization paras
-        if norm:
+        if norm and self.if_norm:
             self.state_norm = load(join(model_dir,'state_norm.npy'))
 
         # Load the agent paras

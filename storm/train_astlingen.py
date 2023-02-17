@@ -87,7 +87,7 @@ def efd_test(env,event=None):
 
 
 if __name__ == '__main__':
-    env = astlingen(config_file = './envs/config/astlingen.yaml',initialize=False)
+    env = astlingen(config_file = './envs/config/astlingen_3act.yaml',initialize=False)
     hyps = yaml.load(open(os.path.join(HERE,'utils','config.yaml'), "r"), yaml.FullLoader)
     hyp = hyps[env.config['env_name']]
     hyp = hyp[hyp['train']]
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     log = args.init_before_training()
 
-    memory = RandomMemory(args.max_capacity, args.cwd, args.if_load, args.on_policy)
+    memory = RandomMemory(args.max_capacity, args.cwd, args.if_load and not args.clear_memory, args.on_policy)
     ctrl = args.agent_class(args.observ_space,args.action_shape,args)
 
     events = pd.read_csv(args.rainfall['training_events'])

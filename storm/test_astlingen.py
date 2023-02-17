@@ -15,13 +15,15 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
 
 
-def interact_steps(env,arg,event=None,train=False):
+def interact_steps(env,arg,event=None,train=False,on_policy=False):
     f = arg.agent_class(arg.observ_space,arg.action_shape,arg)
     state = env.reset(event)
     done = False
     while not done:
         # no prediction
         action = f.act(state,train)
+        if on_policy:
+            action,_ = action
         setting = f.convert_action_to_setting(action)
         done = env.step(setting)
         state = env.state()

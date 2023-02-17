@@ -1,6 +1,6 @@
 # Environment name
 chaohu:
-  train: DQN
+  train: VDN
   # strategies
   VDN:
     # Arguments for the agent structure
@@ -38,7 +38,7 @@ chaohu:
     
     # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/chaohu_VDN # the working directory
+    cwd: ./model/chaohu_VDN_ori2 # the working directory
     if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
@@ -81,8 +81,8 @@ chaohu:
     
     # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/chaohu_DQN # the working directory
-    if_remove: False # if remove the cwd or keep it
+    cwd: ./model/chaohu_DQN_ori2 # the working directory
+    if_remove: True # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
@@ -112,7 +112,7 @@ chaohu:
     # Arguments for the exploration
     total_episodes: 5000 # training steps
     pre_episodes: 100 # pre-sampling steps
-    ini_episodes: 0 # initial episodes n
+    ini_episodes: 2500 # initial episodes n
     explore_events: 20 # exploration events
     epsilon_decay: 0.999 # epsilon-greedy noise
     epsilon_min: 0.1 # minimum epsilon-greedy noise
@@ -121,9 +121,9 @@ chaohu:
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/chaohu_IQL # the working directory
+    cwd: ./model/chaohu_IQL_ori2 # the working directory
     if_remove: False # if remove the cwd or keep it
-    if_load: False # if load the current model
+    if_load: True # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
 
@@ -165,6 +165,51 @@ chaohu:
     # Arguments for the training process
     save_gap: 100 # save the agent & state_norm per save_gap
     cwd: ./model/chaohu_QMIX # the working directory
+    if_remove: False # if remove the cwd or keep it
+    if_load: False # if load the current model
+    replace_rain: False # if replace the rainfall events
+    processes: 5 # for parallel sampling, use 0 or 1 to close multiprocess
+
+  A2C:
+    # Arguments for the agent structure
+    agent_class: A2C # agent class
+    if_mac: False # if is multi-agent
+    if_norm: False # if use normalized state
+    if_double: False # if use double network
+    if_recurrent: False # if use recurrent
+    on_policy: True # if on-policy
+    clear_memory: True # if clear memory in each episode
+    seq_len: 3 # recurrent sequence length
+    net_dim: 128 # dimension of hidden layers
+    num_layer: 3 # number of network layers
+    if_dueling: False # if use dueling layer
+
+    # Arguments for the training
+    max_capacity: 524288 # maximum capacity for the replay buffer
+    batch_size: 128 # batch size of the training data
+    gamma: 0.95 # discouted rate
+    act_learning_rate: 0.0001 # learning rate
+    cri_learning_rate: 0.001 # learning rate
+    update_interval: 0.05 # update tau for target network
+    repeat_times: 5 # repeatedly update network using ReplayBuffer
+    loss_function: MeanSquaredError # loss function
+    optimizer: Adam # optimizer
+
+    # Arguments for the exploration
+    total_episodes: 5000 # training steps
+    pre_episodes: 0 # pre-sampling steps
+    ini_episodes: 0 # initial episodes n
+    explore_events: 20 # exploration events
+    epsilon_decay: 0.999 # epsilon-greedy noise
+    epsilon_min: 0.1 # minimum epsilon-greedy noise
+
+    # Arguments for the evaluation
+    eval_events: 1 # evaluation events
+    eval_gap: 10 # evaluate the agent per eval_gap
+    
+    # Arguments for the training process
+    save_gap: 100 # save the agent & state_norm per save_gap
+    cwd: ./model/chaohu_A2C # the working directory
     if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
@@ -216,12 +261,11 @@ chaohu:
       IQL: reward
       VDN: train
     if_predict: False # if use the predictive algorithm
-    cwd: results/chaohu # workdir to save the figures & table
-    test_name: records  # json name
+    cwd: results/chaohu_ori2 # workdir to save the figures & table
+    test_name: MPC4  # json name
     if_remove: False # if remove the results dir
     if_load: False # if load the current result file
     
-
 # Environment name
 astlingen:
   train: PPO
@@ -251,7 +295,7 @@ astlingen:
     # Arguments for the exploration
     total_episodes: 5000 # training steps
     pre_episodes: 0 # pre-sampling steps
-    ini_episodes: 0 # initial episodes n
+    ini_episodes: 4901 # initial episodes n
     explore_events: 50 # exploration events
     epsilon_decay: 0.999 # epsilon-greedy noise
     epsilon_min: 0.1 # minimum epsilon-greedy noise
@@ -260,17 +304,17 @@ astlingen:
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/astlingen_VDN # the working directory
+    cwd: ./model/astlingen_VDN2 # the working directory
     if_remove: False # if remove the cwd or keep it
-    if_load: False # if load the current model
+    if_load: True # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # if use multiprocessing
 
   DQN:
     # Arguments for the agent structure
     agent_class: DQN # agent class
-    if_mac: True # if is multi-agent
-    global_state: False # if use global state of all nodes
+    if_mac: False # if is multi-agent
+    global_state: True # if use global state of all nodes
     if_norm: False # # if use normalized state
     if_double: True # if use double network
     if_recurrent: False # if use recurrent
@@ -303,7 +347,7 @@ astlingen:
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/astlingen_DQN # the working directory
+    cwd: ./model/astlingen_DQN_graphconv # the working directory
     if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
@@ -343,7 +387,7 @@ astlingen:
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/astlingen_IQL # the working directory
+    cwd: ./model/astlingen_IQL2 # the working directory
     if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
@@ -407,8 +451,8 @@ astlingen:
     max_capacity: 8192 # 2 ** 13 maximum capacity for the replay buffer
     batch_size: 512 # batch size of the training data
     gamma: 0.98 # discouted rate
-    lambda_entropy: 0 # if use entropy loss in policy update
-    act_learning_rate: 0.0001 # actor learning rate
+    lambda_entropy: 0.2 # if use entropy loss in policy update
+    act_learning_rate: 0.0005 # actor learning rate
     cri_learning_rate: 0.001 # critic learning rate
     update_interval: 0.05 # update tau for target network
     repeat_times: 5 # repeatedly update network using ReplayBuffer
@@ -418,7 +462,7 @@ astlingen:
     # Arguments for the exploration
     total_episodes: 5000 # training steps
     pre_episodes: 0 # pre-sampling steps
-    ini_episodes: 0 # initial episodes n
+    ini_episodes: 601 # initial episodes n
     explore_events: 50 # exploration events
     epsilon_decay: 0.999 # epsilon-greedy noise
     epsilon_min: 0.1 # minimum epsilon-greedy noise
@@ -427,17 +471,17 @@ astlingen:
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/astlingen_A2C # the working directory
+    cwd: ./model/astlingen_MAA2C # the working directory
     if_remove: False # if remove the cwd or keep it
-    if_load: False # if load the current model
+    if_load: True # if load the current model
     replace_rain: False # if replace the rainfall events
     processes: 5 # if use multiprocessing
 
   PPO:
     # Arguments for the agent structure
     agent_class: PPO # agent class
-    if_mac: False # if is multi-agent
-    global_state: True # if use global state of all nodes
+    if_mac: True # if is multi-agent
+    global_state: False # if use global state of all nodes
     share_conv_layer: True # if share graph convolution layers
     if_norm: False # # if use normalized state
     if_recurrent: False # if use recurrent
@@ -452,11 +496,12 @@ astlingen:
     clear_memory: True # if clear memory in each episode
     max_capacity: 8192 # 2 ** 13 maximum capacity for the replay buffer
     batch_size: 512 # batch size of the training data
+    horizon_len: 6 # multi-step horizon of PPO
     gamma: 0.98 # discouted rate
     lambda_gae: 0.95 # Generalized advantage estimate
-    lambda_entropy: 0 # if use entropy loss in policy update
+    lambda_entropy: 0.2 # if use entropy loss in policy update
     clip_ratio: 0.2 # The clip ratio of policy loss in PPO
-    act_learning_rate: 0.0001 # actor learning rate
+    act_learning_rate: 0.0005 # actor learning rate
     cri_learning_rate: 0.001 # critic learning rate
     update_interval: 0.05 # update tau for target network
     repeat_times: 5 # repeatedly update network using ReplayBuffer
@@ -475,14 +520,97 @@ astlingen:
     eval_events: 1 # evaluation events
     eval_gap: 10 # evaluate the agent per eval_gap
     save_gap: 100 # save the agent & state_norm per save_gap
-    cwd: ./model/astlingen_PPO # the working directory
+    cwd: ./model/astlingen_MAPPO # the working directory
     if_remove: False # if remove the cwd or keep it
     if_load: False # if load the current model
     replace_rain: False # if replace the rainfall events
-    processes: 1 # if use multiprocessing
+    processes: 5 # if use multiprocessing
+
+  GAIL:
+    # Arguments for the agent structure
+    agent_class: GAIL # agent class
+    if_mac: True # if is multi-agent
+    global_state: False # if use global state of all nodes
+    share_conv_layer: True # if share graph convolution layers
+    if_norm: False # # if use normalized state
+    if_recurrent: False # if use recurrent
+    on_policy: True # if on-policy
+    seq_len: 3 # recurrent sequence length
+    net_dim: 128 # dimension of hidden layers
+    num_layer: 3 # number of network layers
+    graph_channel: 64  # dimension of graph conv layers
+    num_conv_layer: 2 # number of graph conv layers
+
+    # Arguments for the training
+    clear_memory: True # if clear memory in each episode
+    max_capacity: 8192 # 2 ** 13 maximum capacity for the replay buffer
+    batch_size: 512 # batch size of the training data
+    horizon_len: 6 # multi-step horizon of PPO
+    gamma: 0.98 # discouted rate
+    lambda_gae: 0.95 # Generalized advantage estimate
+    lambda_entropy: 0.2 # if use entropy loss in policy update
+    clip_ratio: 0.2 # The clip ratio of policy loss in PPO
+    act_learning_rate: 0.0005 # actor learning rate
+    cri_learning_rate: 0.001 # critic learning rate
+    dis_learning_rate: 0.001 # discriminator learning rate
+    update_interval: 0.05 # update tau for target network
+    repeat_times: 5 # repeatedly update network using ReplayBuffer
+    loss_function: MeanSquaredError # loss function
+    optimizer: Adam # optimizer 
+
+    # Arguments for the exploration
+    total_episodes: 5000 # training steps
+    pre_episodes: 0 # pre-sampling steps
+    ini_episodes: 0 # initial episodes n
+    explore_events: 50 # exploration events
+    epsilon_decay: 0.999 # epsilon-greedy noise
+    epsilon_min: 0.1 # minimum epsilon-greedy noise
+
+    # Arguments for the evaluation
+    eval_events: 1 # evaluation events
+    eval_gap: 10 # evaluate the agent per eval_gap
+    save_gap: 100 # save the agent & state_norm per save_gap
+    cwd: ./model/astlingen_GAIL # the working directory
+    expert_traj_dir: ./envs/config/MaxRed_astlingen/
+    if_remove: False # if remove the cwd or keep it
+    if_load: False # if load the current model
+    replace_rain: False # if replace the rainfall events
+    processes: 5 # if use multiprocessing
+
+  Clone:
+    # Arguments for the agent structure
+    agent_class: Behavior_cloning # agent class
+    if_mac: True # if is multi-agent
+    global_state: False # if use global state of all nodes
+    share_conv_layer: True # if share graph convolution layers
+    if_norm: False # # if use normalized state
+    if_recurrent: False # if use recurrent
+    seq_len: 3 # recurrent sequence length
+    net_dim: 512 # dimension of hidden layers
+    num_layer: 3 # number of network layers
+    graph_channel: 64  # dimension of graph conv layers
+    num_conv_layer: 2 # number of graph conv layers
+
+    # Arguments for the training
+    max_capacity: 8192 # 2 ** 13 maximum capacity for the replay buffer
+    batch_size: 512 # batch size of the training data
+    learning_rate: 0.0005 # actor learning rate
+    epochs: 100 # repeatedly update network
+    metric: CategoricalAccuracy # Metric function
+    loss_function: CategoricalCrossentropy # loss function
+    optimizer: Adam # optimizer 
+
+    # Arguments for the evaluation
+    eval_events: 1 # evaluation events
+    cwd: ./model/astlingen_Clone # the working directory
+    expert_traj_dir: ./envs/config/MaxRed_astlingen/
+    if_remove: False # if remove the cwd or keep it
+    if_load: False # if load the current model
+    replace_rain: False # if replace the rainfall events
 
   MPC:
     # Arguments for online search in the testing
+    test_events: 8 # testing events
     if_predict: False # if use the predictive algorithm
     algorithm: GA
     pop_size: 32
@@ -530,11 +658,11 @@ astlingen:
       precipitation_range: # rainfall precipitation sampling range (mm)
         - 5
         - 15
-      date_range: # rainfall precipitation sampling range (mm)
-        - 01/01/2000
+      date_range: # rainfall date sampling range (mm)
+        - 01/01/2007
         - 12/31/2009
       replace_rain: False # if repalce rain
-      test_events: all # number of events
+      test_events:  all # number of events
         # - '02/28/2007-12'
         # - '08/22/2007-21'
         # - '07/03/2008-18'
@@ -559,8 +687,8 @@ astlingen:
 
     processes: 5 # if use multi-processing
     if_predict: False # if use the predictive algorithm
-    cwd: results/astlingen # workdir to save the figures & table
-    test_name: records # json name
+    cwd: results/astlingen2 # workdir to save the figures & table
+    test_name: train # json name
     if_remove: False # if remove the results dir
     if_load: False # if load the current result file
 
