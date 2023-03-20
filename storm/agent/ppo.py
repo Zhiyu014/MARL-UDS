@@ -118,7 +118,6 @@ class PPO:
     def get_advantages(self,r,d,value,last_value):
         # Discounted cumulative sums of vectors for computing rewards-to-go and advantage estimates
         # from ElegantRL
-        # TODO: debug
         advs = zeros_like(r)
         bs = r.shape[0]
         iters = bs // self.horizon_len + 1

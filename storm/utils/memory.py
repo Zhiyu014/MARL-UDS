@@ -64,6 +64,7 @@ class RandomMemory():
             data = np.load(os.path.join(cwd,'experience_%s.npy'%item)).tolist()
             setattr(self,item,deque(data,maxlen=self.limit))
             print('Load experience %s'%item)
+        self.cur_capa = len(self.reward)
 
     def get_state_norm(self):
         state = np.asarray(self.state)

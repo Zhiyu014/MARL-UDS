@@ -18,12 +18,24 @@ Source code, data and figures for the MARL-enabled real-time control of urban dr
 2. IQL: [Independent Q-learning](https://arxiv.org/abs/1511.08779)
 3. VDN: [Value Decomposition Network](https://arxiv.org/abs/1706.05296)
 4. QMIX: [Monotonic Value Function Factorisation](https://arxiv.org/abs/2003.08839)
-5. A2C & MAA2C(demo): [advantage actor-critic](https://arxiv.org/abs/1602.01783)
-6. PPO & MAPPO(demo): 
+5. A2C & MAA2C: [advantage actor-critic](https://arxiv.org/abs/1602.01783)
+6. PPO & MAPPO: 
     - [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
     - [MAPPO](https://arxiv.org/abs/2103.01955)
+7. [Behavior Cloning (demo)](https://arxiv.org/abs/1805.01954)
+8. GAIL (demo): [Generative adversarial imitation learning](https://arxiv.org/abs/1606.03476)
 
-## Requirements:
+## Tricks
+- Multiple input & Multiple output: Used in DQN when if_mac == True
+- Recurrent network (demo): **if_recurrent** [DRQN](https://arxiv.org/abs/1507.06527)
+    - Use GRU to deal with timeseries data
+- Graph convolution network (demo): **global_state**
+    - Info of all the elements (nodes or links)
+    - Use GCN to convolve before MLP
+    - Share convolution layers: **share_conv_layer**
+
+
+## Requirements
 - tensorflow >= 2.3
 - tensorflow_probability >= 0.11.1
 - spektral == 1.2.0

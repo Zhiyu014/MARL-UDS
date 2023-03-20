@@ -315,6 +315,7 @@ astlingen:
     agent_class: DQN # agent class
     if_mac: False # if is multi-agent
     global_state: True # if use global state of all nodes
+    share_conv_layer: True # if share graph convolution layers
     if_norm: False # # if use normalized state
     if_double: True # if use double network
     if_recurrent: False # if use recurrent

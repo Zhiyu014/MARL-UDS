@@ -54,7 +54,10 @@ class GAIL(PPO):
             s, s_,d, log_probs,value = [convert_to_tensor(i,dtype=float32) for i in [s,s_,d,log_probs,value]]
             a = convert_to_tensor(a)
             dis = self.discri_forward(s,a)
-            r = tf.math.log(dis) - tf.math.log(1-dis)
+            r = tf.math.log(dis + 1e-5) - tf.math.log(1-dis + 1e-5)
+            
+            # Normalize the imitation reward
+            # r = (r - reduce_mean(r))/(tf.math.reduce_std(r) + 1e-5)
 
             last_value = 0 if d[-1] is True else self.criticize(s_[-1])
             # deltas = r[:-1] + self.gamma * value[1:] * (1-d) - value[:-1]
@@ -80,7 +83,9 @@ class GAIL(PPO):
             tape.watch(s_f)
             tape.watch(s_t)
             d_t,d_f = self.discri_forward(s_t,a_t),self.discri_forward(s_f,a_f)
-            discri_loss = reduce_mean(tf.math.log(1-d_t)) + reduce_mean(tf.math.log(d_f))
+            # discri_loss = reduce_mean(tf.math.log(1-d_t)) + reduce_mean(tf.math.log(d_f))
+            discri_loss = ks.losses.binary_crossentropy(d_t, tf.ones_like(d_t))
+            discri_loss += ks.losses.binary_crossentropy(d_f, tf.zeros_like(d_f))
         grads = tape.gradient(discri_loss, self.discri.model.trainable_variables)
         self.dis_optimizer.apply_gradients(zip(grads, self.discri.model.trainable_variables))
         return discri_loss
@@ -132,4 +137,5 @@ class GAIL(PPO):
             else:
                 self.actor.load(0,model_dir)
             self.critic.load(0,model_dir)
-            self.discri.load(0,model_dir)
+            if hasattr(self,'discri'):
+                self.discri.load(0,model_dir)
