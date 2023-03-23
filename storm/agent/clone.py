@@ -101,7 +101,7 @@ class Behavior_cloning:
                 accs = []
                 for i,act in enumerate(self.actor):
                     with GradientTape() as tape:
-                        tape.watch(o[i])
+                        tape.watch(act.model.trainable_variables)
                         ai = one_hot(a[:,i],self.action_shape[i])
                         a_pred = act.model(o[i])
                         loss = self.loss_fn(a_pred,ai)
@@ -112,7 +112,7 @@ class Behavior_cloning:
                 loss,acc = reduce_mean(losses), reduce_mean(accs)
             else:
                 with GradientTape() as tape:
-                    tape.watch(s)
+                    tape.watch(self.actor.model.trainable_variables)
                     ai = one_hot(a,self.action_shape)
                     a_pred = self.actor.model(s)
                     loss = self.loss_fn(a_pred,ai)

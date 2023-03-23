@@ -216,7 +216,7 @@ class QMIX:
         targets = self._calculate_target(r,s_,o_,d)
 
         with GradientTape() as tape:
-            tape.watch(o)
+            tape.watch(self.trainable_variables)
             q_values = [reduce_sum(agent.forward(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                     for idx,agent in enumerate(self.agents)]
             q_values = transpose(convert_to_tensor(q_values))

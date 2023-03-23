@@ -80,8 +80,7 @@ class GAIL(PPO):
         s_t,a_t,_,_,_ = self.expert_trajs.sample(s_f.shape[0],continuous=True)
         s_t,a_t = convert_to_tensor(s_t,dtype=float32),convert_to_tensor(a_t)
         with GradientTape() as tape:
-            tape.watch(s_f)
-            tape.watch(s_t)
+            tape.watch(self.discri.model.trainable_variables)
             d_t,d_f = self.discri_forward(s_t,a_t),self.discri_forward(s_f,a_f)
             # discri_loss = reduce_mean(tf.math.log(1-d_t)) + reduce_mean(tf.math.log(d_f))
             discri_loss = ks.losses.binary_crossentropy(d_t, tf.ones_like(d_t))

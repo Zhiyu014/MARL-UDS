@@ -199,7 +199,7 @@ class PPO:
 
     def critic_update(self,s, returns):
         with GradientTape() as tape:
-            tape.watch(s)
+            tape.watch(self.critic.model.trainable_variables)
             y_preds = squeeze(self.critic.forward(s))
             value_loss = self.loss_fn(y_preds, returns)
         grads = tape.gradient(value_loss, self.critic.model.trainable_variables)
@@ -210,7 +210,7 @@ class PPO:
         actor = self.actor[i] if self.if_mac else self.actor
         variables = actor.model.trainable_variables
         with GradientTape() as tape:
-            tape.watch(s)
+            tape.watch(variables)
             new_log_probs,entropy = actor.get_action_entropy(s,a)
             ratio = tf.exp(new_log_probs - log_probs)
             min_adv = tf.where(

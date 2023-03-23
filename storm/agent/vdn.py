@@ -158,7 +158,7 @@ class VDN:
         targets = self._calculate_target(r,o_,d)
         
         with GradientTape() as tape:
-            tape.watch(o)
+            tape.watch(self.trainable_variables)
             q_values = [reduce_sum(agent.forward(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                     for idx,agent in enumerate(self.agents)]
             q_tot = reduce_sum(convert_to_tensor(q_values),axis=0)

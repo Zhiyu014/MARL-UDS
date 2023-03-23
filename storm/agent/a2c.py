@@ -165,7 +165,7 @@ class A2C:
 
     def critic_update(self,s, r, s_, d):
         with GradientTape() as tape:
-            tape.watch(s)
+            tape.watch(self.critic.model.trainable_variables)
             y_preds = squeeze(self.critic.forward(s))
             target_value = r + self.gamma * (1-d) * squeeze(self.critic.forward(s_,target=True))
             value_loss = self.cri_loss_fn(y_preds, target_value)
@@ -177,7 +177,7 @@ class A2C:
         actor = self.actor[i] if self.if_mac else self.actor
         variables = actor.model.trainable_variables
         with GradientTape() as tape:
-            tape.watch(s)
+            tape.watch(variables)
             log_probs,entropy = actor.get_action_entropy(s,squeeze(a))
             policy_loss = reduce_mean(log_probs*advs)
             policy_loss += self.lambda_entropy*reduce_mean(entropy)

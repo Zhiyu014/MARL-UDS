@@ -163,7 +163,7 @@ class DQN:
     def _train_on_batch(self, s, a, targets):
         
         with GradientTape() as tape:
-            tape.watch(s)
+            tape.watch(self.trainable_variables)
             y_preds = self.agent.forward(s)
             if self.if_mac:
                 y_preds = [reduce_sum(y_preds[:,sum(self.action_shape[:i]):sum(self.action_shape[:i])+shape]*one_hot(a[:,i],shape),axis=1) for i,shape in enumerate(self.action_shape)]

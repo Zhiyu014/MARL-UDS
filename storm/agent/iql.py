@@ -167,7 +167,7 @@ class IQL:
 
             # los = self._train_on_agent(agent.model,o[idx],a[:,idx],target)
             with GradientTape() as tape:
-                tape.watch(o)
+                tape.watch(agent.model.trainable_variables)
                 y_pred = reduce_sum(agent.forward(o[idx])*one_hot(a[:,idx],self.action_shape[idx]),axis=1)
                 loss_value = self.loss_fn(target, y_pred)
             grads = tape.gradient(loss_value, agent.model.trainable_variables)
