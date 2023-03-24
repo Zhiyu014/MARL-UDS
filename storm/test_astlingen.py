@@ -17,7 +17,7 @@ HERE = os.path.dirname(__file__)
 
 def interact_steps(env,arg,event=None,train=False,on_policy=False):
     f = arg.agent_class(arg.observ_space,arg.action_shape,arg)
-    state = env.reset(event)
+    state = env.reset(event,arg.global_state,arg.seq_len&arg.if_recurrent)
     done = False
     while not done:
         # no prediction
@@ -26,7 +26,7 @@ def interact_steps(env,arg,event=None,train=False,on_policy=False):
             action,_ = action
         setting = f.convert_action_to_setting(action)
         done = env.step(setting)
-        state = env.state()
+        state = env.state(arg.seq_len&arg.if_recurrent)
     perf = env.performance('cumulative')
     return perf
 

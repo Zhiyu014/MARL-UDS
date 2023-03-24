@@ -104,49 +104,74 @@ class chaohu(scenario):
             self.env.terminate()
         return done
 
-    def state_full(self):
-        __state = np.array([[self.data_log[attr][ID][-1]
-            if self.env._isFinished else self.env.methods[attr](ID)
-            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+    def state_full(self,seq=False):
+        # seq should be smaller than the whole event length
+        if seq:
+            __state = np.array([[self.data_log[attr][ID][-seq:]
+        if self.env._isFinished else [0.0]*(seq-1-len(self.data_log[attr][ID][:-1])) + self.data_log[attr][ID][-seq:-1] + [self.env.methods[attr](ID)]
+                for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+        else:
+            __state = np.array([[self.data_log[attr][ID][-1]
+                if self.env._isFinished else self.env.methods[attr](ID)
+                for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
 
-        __last = np.array([[self.data_log[attr][ID][-2]
-            if attr not in ['depthN','rainfall'] and len(self.data_log[attr][ID]) > 1 else 0
-            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+        if seq:
+            __last = np.array([[self.data_log[attr][ID][-seq-1:-1]
+                if len(self.data_log[attr][ID]) > seq 
+                else [0.0]*(seq-len(self.data_log[attr][ID][:-1])) + self.data_log[attr][ID][:-1]
+                for ID in self.get_features(typ)] 
+                if attr not in ['depthN','rainfall','setting']
+                else [[0.0]*seq for _ in self.get_features(typ)]
+                for typ,attr in self.config['global_state']])
+        else:
+            __last = np.array([[self.data_log[attr][ID][-2]
+                if attr not in ['depthN','rainfall','setting'] and len(self.data_log[attr][ID]) > 1 else 0
+                for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
         state = (__state - __last).T
         return state
 
-    def state(self):
+    def state(self,seq=False):
         # Observe from the environment
         if self.global_state:
-            state = self.state_full()
+            state = self.state_full(seq)
             return state        
         if self.env._isFinished:
-            __state = [self.data_log[attribute][ID][-1]
-             for ID,attribute in self.config["states"]]
+            if seq:
+                __state = [list(self.data_log[attribute][ID])[-seq:]
+                for ID,attribute in self.config["states"]]
+            else:
+                __state = [self.data_log[attribute][ID][-1]
+            for ID,attribute in self.config["states"]]
         else:
             __state = self.env._state()
+            if seq:
+                __state = [list(self.data_log[attribute][ID])[-seq:-1] + [__state[idx]]
+                for idx,(ID,attribute) in enumerate(self.config["states"])]  
 
         state = []
         for idx,(ID,attribute) in enumerate(self.config["states"]):
             # Normalize the node depths
             if attribute in ['depthN']:
-                state.append(__state[idx]/self.node_properties[ID]['fullDepth'])
-            elif attribute == 'cumprecip':
+                __value = np.array(__state[idx])/self.node_properties[ID]['fullDepth']
+                if seq:
+                    __value = [0.0] * (seq-len(__value)) + list(__value)
+            elif attribute == 'cumprecip' and not seq:
                 ds = [0]+self.data_log[attribute][ID]
                 __value = np.diff(ds[eval(ID)-1:])[0] if len(ds)>abs(eval(ID)) else 0.0
-                state.append(__value)
-
             else:
                 # Calculate the recent volume based on cumulative value
                 # log must be True
                 # Recent volume has been logged
-                if len(self.data_log[attribute][ID]) > 1:
-                    __value = __state[idx] - self.data_log[attribute][ID][-2]
-                    state.append(__value)
+                if seq:
+                    __value = self.data_log[attribute][ID][-seq-1:-seq] + __state[idx]  # length: seq+1
+                    __value = [0.0]*(seq+1-len(__value)) + __value
+                    __value = np.diff(__value)
                 else:
-                    state.append(__state[idx])
-            
-        state = np.asarray(state)
+                    __value = __state[idx]
+                    if len(self.data_log[attribute][ID]) > 1:
+                        __value -= self.data_log[attribute][ID][-2]
+            state.append(np.asarray(__value))
+        state = np.asarray(state).T if seq else np.asarray(state)
         return state
 
     def performance(self,metric='recent'):
@@ -215,10 +240,11 @@ class chaohu(scenario):
             #     value += 10 + 10 * (1 - total_flood_cso/baseline)
         return value
 
-    def reset(self,swmm_file=None):
+    def reset(self,swmm_file=None, global_state=False,seq=False):
         # clear the data log and reset the environment
         if swmm_file is not None:
             self.config["swmm_input"] = swmm_file
+        
         if not hasattr(self,'env') or swmm_file is not None:
             self.env = env_chaohu(self.config, ctrl=True)
             self.node_properties = {ID: {'initDepth':self.env.methods['getnodeinitdepth'](ID),
@@ -226,9 +252,10 @@ class chaohu(scenario):
             for ID, attribute in self.config["states"] if attribute in ['depthN']}
         else:
             _ = self.env.reset()
-
-        state = self.state()
+            
+        self.global_state = global_state
         self.initialize_logger()
+        state = self.state(seq)
         return state
 
     def initialize_logger(self):

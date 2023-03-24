@@ -96,51 +96,66 @@ class astlingen(scenario):
             self.env.terminate()
         return done
 
-    def state_full(self):
-        __state = np.array([[self.data_log[attr][ID][-1]
-            if self.env._isFinished else self.env.methods[attr](ID)
-            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+    def state_full(self, seq = False):
+        # seq should be smaller than the whole event length
+        if seq:
+            __state = np.array([[self.data_log[attr][ID][-seq:]
+        if self.env._isFinished else [0.0]*(seq-1-len(self.data_log[attr][ID][:-1])) + self.data_log[attr][ID][-seq:-1] + [self.env.methods[attr](ID)]
+                for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+        else:
+            __state = np.array([[self.data_log[attr][ID][-1]
+                if self.env._isFinished else self.env.methods[attr](ID)
+                for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
 
-        __last = np.array([[self.data_log[attr][ID][-2]
-            if attr not in ['depthN','rainfall'] and len(self.data_log[attr][ID]) > 1 else 0
-            for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
+        if seq:
+            __last = np.array([[self.data_log[attr][ID][-seq-1:-1]
+                if len(self.data_log[attr][ID]) > seq 
+                else [0.0]*(seq-len(self.data_log[attr][ID][:-1])) + self.data_log[attr][ID][:-1]
+                for ID in self.get_features(typ)] 
+                if attr not in ['depthN','rainfall','setting']
+                else [[0.0]*seq for _ in self.get_features(typ)]
+                for typ,attr in self.config['global_state']])
+        else:
+            __last = np.array([[self.data_log[attr][ID][-2]
+                if attr not in ['depthN','rainfall','setting'] and len(self.data_log[attr][ID]) > 1 else 0
+                for ID in self.get_features(typ)] for typ,attr in self.config['global_state']])
         state = (__state - __last).T
         return state
 
     def state(self, seq = False):
         # Observe from the environment
         if self.global_state:
-            state = self.state_full()
+            state = self.state_full(seq)
             return state
         if self.env._isFinished:
-            # if seq:
-            #     __state = [list(self.data_log[attribute][ID])[-seq:]
-            #     for ID,attribute in self.config["states"]]
-            # else:
-            __state = [self.data_log[attribute][ID][-1]
+            if seq:
+                __state = [list(self.data_log[attribute][ID])[-seq:]
+                for ID,attribute in self.config["states"]]
+            else:
+                __state = [self.data_log[attribute][ID][-1]
             for ID,attribute in self.config["states"]]
         else:
             __state = self.env._state()
-            # if seq:
-            #     __state = [list(self.data_log[attribute][ID])[-seq:-1] + [__state[idx]]
-            #     for idx,(ID,attribute) in enumerate(self.config["states"])]  
+            if seq:
+                __state = [list(self.data_log[attribute][ID])[-seq:-1] + [__state[idx]]
+                for idx,(ID,attribute) in enumerate(self.config["states"])]  
         state = []
         for idx,(ID,attribute) in enumerate(self.config["states"]):
-            if attribute in ['depthN','rainfall']:
-                state.append(__state[idx])
+            if attribute in ['depthN','rainfall','setting']:
+                __value = __state[idx]
+                if seq:
+                    # ensure length seq and fill with 0
+                    __value = [0.0] * (seq-len(__value)) + __value
             else:
-                # if seq:
-                #     if len(self.data_log[attribute][ID]) > seq:
-                #         __value = np.diff(self.data_log[attribute][ID][-seq-1:-seq]+__state)
-                #     else:
-                #         __value = np.diff([0] + __state)
-                #     state.append(__value)
-                # else:
-                if len(self.data_log[attribute][ID]) > 1:
-                    __value = __state[idx] - self.data_log[attribute][ID][-2]
-                    state.append(__value)
+                if seq:
+                    __value = self.data_log[attribute][ID][-seq-1:-seq] + __state[idx]  # length: seq+1
+                    __value = [0.0]*(seq+1-len(__value)) + __value
+                    __value = np.diff(__value)
                 else:
-                    state.append(__state[idx])
+                    __value = __state[idx]
+                    if len(self.data_log[attribute][ID]) > 1:
+                        __value -= self.data_log[attribute][ID][-2]
+            state.append(np.asarray(__value))
         state = np.asarray(state).T if seq else np.asarray(state)
         return state
 
@@ -178,7 +193,7 @@ class astlingen(scenario):
         else:
             return - __reward
 
-    def reset(self,swmm_file=None,seq=False):
+    def reset(self,swmm_file=None, global_state=False,seq=False):
         # clear the data log and reset the environment
         if swmm_file is not None:
             self.config["swmm_input"] = swmm_file
@@ -187,6 +202,7 @@ class astlingen(scenario):
         else:
             _ = self.env.reset()
 
+        self.global_state = global_state
         self.initialize_logger()
         state = self.state(seq)
         return state
@@ -194,8 +210,8 @@ class astlingen(scenario):
     def initialize_logger(self, config=None,maxlen=None):
         # Create an object for storing the data points
         self.data_log = {
-            "performance_measure": deque(maxlen=maxlen),
-            "simulation_time": deque(maxlen=maxlen),
+            "performance_measure": [] if maxlen is None else deque(maxlen=maxlen),
+            "simulation_time": [] if maxlen is None else deque(maxlen=maxlen),
             "setting": {}
         }
         config = self.config if config is None else config
@@ -203,27 +219,27 @@ class astlingen(scenario):
         for ID, attribute, _ in config["performance_targets"]:
             if attribute not in self.data_log.keys():
                 self.data_log[attribute] = {}
-            self.data_log[attribute][ID] = deque(maxlen=maxlen)
+            self.data_log[attribute][ID] =  [] if maxlen is None else deque(maxlen=maxlen)
             
         if self.global_state:
             for typ,attribute in config['global_state']:
                 if attribute not in self.data_log.keys():
                     self.data_log[attribute] = {}
                 for ID in self.get_features(typ):
-                    self.data_log[attribute][ID] = deque(maxlen=maxlen)
+                    self.data_log[attribute][ID] =  [] if maxlen is None else deque(maxlen=maxlen)
         else:
             for ID, attribute in config["states"]:
                 if attribute not in self.data_log.keys():
                     self.data_log[attribute] = {}
-                self.data_log[attribute][ID] = deque(maxlen=maxlen)
+                self.data_log[attribute][ID] =  [] if maxlen is None else deque(maxlen=maxlen)
 
         for ID in config["action_space"].keys():
-            self.data_log["setting"][ID] = deque(maxlen=maxlen)
+            self.data_log["setting"][ID] =  [] if maxlen is None else deque(maxlen=maxlen)
         
         for ID, attribute, _ in config["reward"]:
             if attribute not in self.data_log.keys():
                 self.data_log[attribute] = {}
-            self.data_log[attribute][ID] = deque(maxlen=maxlen)
+            self.data_log[attribute][ID] =  [] if maxlen is None else deque(maxlen=maxlen)
 
     def _logger(self):
         super()._logger()

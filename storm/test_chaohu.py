@@ -6,6 +6,7 @@ from utils.config import Arguments
 import yaml
 import os
 import multiprocessing as mp
+from MPC_chaohu import run_ea
 import random
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
@@ -28,18 +29,37 @@ def predict(event,arg,q):
 
 def interact_steps(env,arg,event=None,train=False,if_predict=False):
     f = arg.agent_class(arg.observ_space,arg.action_shape,arg)
-    state = env.reset(event)
+    state = env.reset(event,arg.global_state,arg.seq_len&arg.if_recurrent)
     done = False
     while not done:
+        if if_predict:
+            # get current setting
+            cur_setting = [env.data_log['setting'][ID][-1]
+            for ID in env.config['action_space'] if len(env.data_log['setting'][ID])>0]
+            cur_setting = [0 for _ in env.config['action_space']] if cur_setting == [] else cur_setting
+            
+            # get agent reactions
+            eval_file = env.get_eval_file()
+            q = mp.Queue()
+            p = mp.Process(target=predict,args=(eval_file,arg,q,))
+            p.start()
+            p.join()
+            print("Finish reaction: %s"%env.env.methods['simulation_time']())
+            
+            # run predictive optimization
+            settings = [cur_setting] + q.get()
+            setting = run_ea(eval_file,settings,arg)
+            print("Finish search: %s"%env.env.methods['simulation_time']())
 
-        # no prediction
-        action = f.act(state,train)
-        setting = f.convert_action_to_setting(action)
-        # if state[1] > 0.95:
-        #     setting = [1,1] + setting[2:].copy()
+        else:
+            # no prediction
+            action = f.act(state,train)
+            setting = f.convert_action_to_setting(action)
+            # if state[1] > 0.95:
+            #     setting = [1,1] + setting[2:].copy()
 
         done = env.step(setting)
-        state = env.state()
+        state = env.state(arg.seq_len&arg.if_recurrent)
     perf = env.performance('cumulative')
     return perf
 

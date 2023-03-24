@@ -42,6 +42,7 @@ class env_chaohu(env_base):
         self.methods.update({'cumprecip':self._getSystemRainfall,
                              'cumflooding':self._getCumflooding,
                              'totalinflow':self._getNodeTotalInflow,
+                             'lateral_infow_vol':self._getNodeLateralinflowVol,
                              'pumpenergy':self._getPumpEnergy,
                              'getnodefulldepth':self._getNodeFullDepth,
                              'getnodeinitdepth':self._getNodeInitDepth,
@@ -52,6 +53,10 @@ class env_chaohu(env_base):
     def _getNodeTotalInflow(self,ID):
         # Cumulative inflow volume
         return self.sim._model.node_inflow(ID)
+    
+    def _getNodeLateralinflowVol(self,ID):
+        # Cumulative lateral inflow volume
+        return self.sim._model.node_statistics(ID)['lateral_infow_vol']
     
     def _getSystemRainfall(self,SysID):
         return self.sim._model.runoff_routing_stats()['rainfall']
