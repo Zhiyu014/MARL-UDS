@@ -17,7 +17,7 @@ class PPO:
         self.name = "PPO"
         self.model_dir = args.cwd
 
-        self.recurrent = getattr(args,"if_recurrent",False)
+        self.if_recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 1)
         self.state_shape = getattr(args, "state_shape", 10)
         self.observ_space = observ_space
@@ -25,7 +25,7 @@ class PPO:
         self.if_mac = getattr(args,'if_mac',False)            
         self.if_norm = getattr(args,'if_norm',False)
 
-        self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
+        self.seq_len = getattr(args,"seq_len",3) if self.if_recurrent else None
         self.graph_conv = getattr(args,"global_state",False)
         self.share_conv_layer = getattr(args,"share_conv_layer",False)
         self.critic = QAgent(1,self.state_shape,args,self.seq_len,self.graph_conv) 
@@ -64,7 +64,7 @@ class PPO:
 
 
     def act(self,state,train=True):
-        if self.recurrent:
+        if self.if_recurrent:
             state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
                 if len(state)<self.seq_len else state
         # Get action and logp
@@ -88,7 +88,7 @@ class PPO:
 
     def _split_observ(self,s):
         # Split as multi-agent & convert to tensor
-        if self.recurrent:
+        if self.if_recurrent:
             o = [convert_to_tensor([[[sis[idx] for idx in self.observ_space[i]]
                                    for sis in si] for si in s],dtype=float32) 
                                    for i in range(self.n_agents)]
@@ -99,7 +99,7 @@ class PPO:
         return o
 
     def criticize(self,state):
-        if self.recurrent:
+        if self.if_recurrent:
             state =  [state[0] for _ in range(self.seq_len-len(state))]+state \
                 if len(state)<self.seq_len else state
         # Get action and logp
@@ -157,7 +157,7 @@ class PPO:
 
     def evaluate_net(self,trajs):
         s, a, r, s_, d, log_probs, value = [[traj[i] for traj in trajs] for i in range(7)]
-        if self.recurrent:
+        if self.if_recurrent:
             s = [[s[0] for _ in range(self.seq_len-i-1)]+s[:i+1] for i in range(self.seq_len-1)]+\
                 [s[i:i+self.seq_len] for i in range(len(s)-self.seq_len+1)]
             s_ = [[s_[0] for _ in range(self.seq_len-i-1)]+s_[:i+1] for i in range(self.seq_len-1)]+\

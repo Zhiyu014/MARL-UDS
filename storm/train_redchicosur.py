@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 19 10:58:18 2021
+import os,yaml
+import multiprocessing as mp
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+# os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '/gpu:0'
+import tensorflow as tf
+tf.config.list_physical_devices(device_type='GPU')
 
-@author: MOMO
-"""
 from envs.RedChicoSur import RedChicoSur
 from utils.memory import RandomMemory
 # from rnmemory import Recurrent_RandomMemory
 import yaml
-import os
 import numpy as np
-import multiprocessing as mp
-# import multiprocess as mp
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from utils.config import Arguments
 from functools import reduce
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
 
 def interact_steps(env,arg,train=True):

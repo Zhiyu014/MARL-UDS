@@ -21,7 +21,7 @@ class DQN:
         self.name = "DQN"
         self.model_dir = args.cwd
 
-        self.recurrent = getattr(args,"if_recurrent",False)
+        self.if_recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 1)
         self.state_shape = getattr(args, "state_shape", 10)
         self.observ_space = observ_space
@@ -30,7 +30,7 @@ class DQN:
         output_size = sum(self.action_shape) if self.if_mac else self.action_shape
         input_size = self.state_shape if self.if_mac else self.observ_space
 
-        self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
+        self.seq_len = getattr(args,"seq_len",3) if self.if_recurrent else None
         self.graph_conv = getattr(args,"global_state",False)
         self.agent = QAgent(output_size,input_size,args,self.seq_len,self.graph_conv) 
         
@@ -75,7 +75,7 @@ class DQN:
             else:
                 action = (random.randint(0,self.action_shape-1),)
         else:
-            if self.recurrent:
+            if self.if_recurrent:
                 # Normalize the state
                 if self.if_norm:
                     state = [self._normalize_state(obs) for obs in state]
@@ -132,7 +132,7 @@ class DQN:
         if self.if_norm:
             s,s_ = self._normalize_state(s),self._normalize_state(s_)
 
-        if self.recurrent:
+        if self.if_recurrent:
             s = [[s[0] for _ in range(self.seq_len-i-1)]+s[:i+1] for i in range(self.seq_len-1)]+\
                 [s[i:i+self.seq_len] for i in range(len(s)-self.seq_len+1)]
             s_ = [[s_[0] for _ in range(self.seq_len-i-1)]+s_[:i+1] for i in range(self.seq_len-1)]+\

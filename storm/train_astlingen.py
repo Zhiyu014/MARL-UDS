@@ -1,30 +1,32 @@
 # -*- coding: utf-8 -*-
 
+import os,yaml
+import multiprocessing as mp
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+# os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '/gpu:0'
+import tensorflow as tf
+tf.config.list_physical_devices(device_type='GPU')
 
 from envs.astlingen import astlingen
 from envs.utilities import generate_split_file
 from utils.memory import RandomMemory
 # from rnmemory import Recurrent_RandomMemory
-import yaml
-import os
-import multiprocessing as mp
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from utils.config import Arguments
 from functools import reduce
 import pandas as pd
-
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 HERE = os.path.dirname(__file__)
 
 
 def interact_steps(env,arg,event=None,train=True,on_policy=False):
     if type(arg) is Arguments:
-        f = arg.agent_class(arg.observ_space,arg.action_shape,arg,act_only=True)
+        with tf.device('/cpu:0'):
+            f = arg.agent_class(arg.observ_space,arg.action_shape,arg,act_only=True)
     else:
         f = arg
     trajs = []
-    state = env.reset(event,arg.global_state,arg.seq_len&arg.if_recurrent)
+    state = env.reset(event,env.global_state,arg.seq_len&arg.if_recurrent)
     done = False
     rewards = 0
     while not done:

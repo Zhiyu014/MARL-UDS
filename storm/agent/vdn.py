@@ -22,10 +22,10 @@ class VDN:
         self.name = "VDN"
         self.model_dir = args.cwd
 
-        self.recurrent = getattr(args,"if_recurrent",False)
+        self.if_recurrent = getattr(args,"if_recurrent",False)
         self.n_agents = getattr(args, "n_agents", 2)
 
-        self.seq_len = getattr(args,"seq_len",3) if self.recurrent else None
+        self.seq_len = getattr(args,"seq_len",3) if self.if_recurrent else None
         self.agents = [QAgent(action_shape[i],len(observ_space[i]),args,self.seq_len)
                     for i in range(self.n_agents)]
                     
@@ -70,7 +70,7 @@ class VDN:
         if train and random.random() < self.epsilon:
             action = [random.randint(0,self.action_shape[i]-1) for i in range(self.n_agents)]
         else:
-            if self.recurrent:
+            if self.if_recurrent:
                 # Normalize the state
                 if self.if_norm:
                     state = [self._normalize_state(obs) for obs in state]
@@ -119,7 +119,7 @@ class VDN:
         if self.if_norm:
             s,s_ = self._normalize_state(s),self._normalize_state(s_)
 
-        if self.recurrent:
+        if self.if_recurrent:
             s = [[s[0] for _ in range(self.seq_len-i-1)]+s[:i+1] for i in range(self.seq_len-1)]+\
                 [s[i:i+self.seq_len] for i in range(len(s)-self.seq_len+1)]
             s_ = [[s_[0] for _ in range(self.seq_len-i-1)]+s_[:i+1] for i in range(self.seq_len-1)]+\
@@ -138,7 +138,7 @@ class VDN:
 
     def _split_observ(self,s):
         # Split as multi-agent & convert to tensor
-        if self.recurrent:
+        if self.if_recurrent:
             o = [convert_to_tensor([[[sis[idx] for idx in self.observ_space[i]]
                                    for sis in si] for si in s],dtype=float32) 
                                    for i in range(self.n_agents)]
