@@ -24,7 +24,7 @@ def interact_steps(env,arg,event=None,train=True,base=None,on_policy=False):
     else:
         f = arg
     trajs = []
-    state = env.reset(event,env.global_state,arg.seq_len&arg.if_recurrent)
+    state = env.reset(event,env.global_state,arg.seq_len if arg.if_recurrent else False)
     done = False
     rewards = 0
     while not done:
@@ -34,7 +34,7 @@ def interact_steps(env,arg,event=None,train=True,base=None,on_policy=False):
             action,log_probs = action
         setting = f.convert_action_to_setting(action)
         done = env.step(setting,env.config['control_interval']*60)
-        state = env.state(arg.seq_len&arg.if_recurrent)
+        state = env.state(arg.seq_len if arg.if_recurrent else False)
         # Use designed reward function
         reward = env.reward(done,base)
         # Use the basic reward function (related to CSO & flooding)

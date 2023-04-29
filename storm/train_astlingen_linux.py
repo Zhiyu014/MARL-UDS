@@ -6,8 +6,7 @@ import multiprocessing as mp
 # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 # os.environ['CUDA_VISIBLE_DEVICES'] = '/gpu:0'
-import tensorflow as tf
-tf.config.list_physical_devices(device_type='GPU')
+# tf.config.list_physical_devices(device_type='GPU')
 
 from envs.astlingen import astlingen
 from envs.utilities import generate_split_file
@@ -20,8 +19,11 @@ HERE = os.path.dirname(__file__)
 
 
 def interact_steps(env,arg,event=None,train=True,on_policy=False):
+    os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    import tensorflow as tf
     if type(arg) is Arguments:
-        with tf.device('/cpu:0'):
+        with tf.device("/cpu:0"):
             f = arg.agent_class(arg.observ_space,arg.action_shape,arg,act_only=True)
     else:
         f = arg
@@ -88,6 +90,38 @@ def efd_test(env,event=None):
     return perf
 
 
+def update_agent(args,memory,log,res):
+    os.environ['CUDA_VISIBLE_DEVICES'] = '/gpu:0'
+    import tensorflow as tf
+    tf.config.list_physical_devices(device_type='GPU')
+    with tf.device('/gpu:0'):
+        ctrl = args.agent_class(args.observ_space,args.action_shape,args,False)
+    losses = ctrl.update_net(memory)
+
+    rewards,perfs = [[r[i] for r in res] for i in range(1,3)]
+    update = log.log((rewards,perfs,losses),train=True)
+    if update[0]:
+        ctrl.save(os.path.join(ctrl.model_dir,'train'))
+    if update[1]:
+        ctrl.save(os.path.join(ctrl.model_dir,'reward'))
+    # load & save in each episode after pre_episodes
+    ctrl.save()
+    return log
+
+def evaluate_agent(args,log,res):
+    os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    import tensorflow as tf
+    with tf.device('/cpu:0'):
+        ctrl = args.agent_class(args.observ_space,args.action_shape,args)
+    perfs = [r[-1] for r in res]
+    losses = [ctrl.evaluate_net(r[0]) for r in res]
+    update = log.log((perfs,losses),train=False)
+    if update:
+        ctrl.save(os.path.join(ctrl.model_dir,'eval'))
+    return log
+
+
 if __name__ == '__main__':
     env = astlingen(initialize=False)
     hyps = yaml.load(open(os.path.join(HERE,'utils','config.yaml'), "r"), yaml.FullLoader)
@@ -102,7 +136,8 @@ if __name__ == '__main__':
     log = args.init_before_training()
 
     memory = RandomMemory(args.max_capacity, args.cwd, args.if_load and not args.clear_memory, args.on_policy)
-    ctrl = args.agent_class(args.observ_space,args.action_shape,args)
+    if args.processes == 1:
+        ctrl = args.agent_class(args.observ_space,args.action_shape,args)
 
     events = pd.read_csv(args.rainfall['training_events'])
 
@@ -147,22 +182,32 @@ if __name__ == '__main__':
         print('Sampling Complete: %s'%args.episode)
 
         if args.episode < args.pre_episodes:
-            ctrl.episode_update(*args.episode_update())
+            if args.processes > 1:
+                args.episode_update()
+            else:
+                ctrl.episode_update(*args.episode_update())
             continue
 
         # Training
         print('Upgrading')
-        losses = ctrl.update_net(memory)
-        print('Upgrade Complete: %s'%args.episode)
-        update = log.log((rewards,perfs,losses),train=True)
-        if update[0]:
-            ctrl.save(os.path.join(ctrl.model_dir,'train'))
-        if update[1]:
-            ctrl.save(os.path.join(ctrl.model_dir,'reward'))
-        # load & save in each episode after pre_episodes
         if args.processes > 1:
+            # memory,log = update_agent(args,memory,log,res)
+            pool = mp.Pool(1)
+            r = pool.apply_async(func=update_agent,args=(args,memory,log,res,))
+            pool.close()
+            pool.join()
+            log = r.get()
             args.if_load = True
-            ctrl.save()
+        else:
+            losses = ctrl.update_net(memory)
+            rewards,perfs = [r[1] for r in res],[r[-1] for r in res]
+            update = log.log((rewards,perfs,losses),train=True)
+            if update[0]:
+                ctrl.save(os.path.join(ctrl.model_dir,'train'))
+            if update[1]:
+                ctrl.save(os.path.join(ctrl.model_dir,'reward'))
+            # load & save in each episode after pre_episodes
+        print('Upgrade Complete: %s'%args.episode)
 
         # on-policy
         if args.clear_memory:
@@ -170,30 +215,47 @@ if __name__ == '__main__':
 
         # Evaluate the model in several episodes
         if args.episode % args.eval_gap == 0:
-            perfs = []
-            losses = []
-            for idx,event in enumerate(eval_events):
-                trajs,_,perf = interact_steps(env,ctrl,event,train=False,on_policy=args.on_policy)
-                loss = ctrl.evaluate_net(trajs)
-                perfs.append(perf)
-                losses.append(loss)
-                print('BC Score: %s'%bc_evals[idx])
-            update = log.log((perfs,losses),train=False)
-            if update:
-                ctrl.save(os.path.join(ctrl.model_dir,'eval'))
+            if args.processes > 1:
+                pool = mp.Pool(args.processes)
+                res = []
+                for idx,event in enumerate(eval_events):
+                    r = pool.apply_async(func=interact_steps,args=(env,args,event,False,args.on_policy,))
+                    res.append(r)
+                pool.close()
+                pool.join()
+                res = [r.get() for r in res]
+
+                pool = mp.Pool(1)
+                r = pool.apply_async(func=evaluate_agent,args=(args,log,res,))
+                pool.close()
+                pool.join()
+                log = r.get()
+            else:
+                res = [interact_steps(env,ctrl,event,train=False,on_policy=args.on_policy)
+                for event in enumerate(eval_events)]
+                perfs = [r[-1] for r in res]
+                losses = [ctrl.evaluate_net(r[0]) for r in res]
+                update = log.log((perfs,losses),train=False)
+                if update:
+                    ctrl.save(os.path.join(ctrl.model_dir,'eval'))
 
         # Save the current model
         if args.episode % args.save_gap == 0:
-            ctrl.save()
+            if args.processes == 1:
+                ctrl.save()
             if not args.clear_memory:
                 memory.save()
             log.save()
             # log.plot()
 
         # Update the episode and exploration greedy
-        ctrl.episode_update(*args.episode_update())
-
-    ctrl.save()
+        if args.processes == 1:
+            ctrl.episode_update(*args.episode_update())
+        else:
+            args.episode_update()
+            
+    if args.processes == 1:
+        ctrl.save()
     if not args.clear_memory:
         memory.save()
     log.save()
